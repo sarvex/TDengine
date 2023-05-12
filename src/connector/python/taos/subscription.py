@@ -16,7 +16,7 @@ class TDengineSubscription(object):
             raise OperationalError("Invalid use of consume")
 
         result, fields = CTaosInterface.consume(self._sub)
-        buffer = [[] for i in range(len(fields))]
+        buffer = [[] for _ in range(len(fields))]
         while True:
             block, num_of_fields = CTaosInterface.fetchBlock(result, fields)
             if num_of_fields == 0:
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     # Generate a cursor object to run SQL commands
     sub = conn.subscribe(True, "test", "select * from meters;", 1000)
 
-    for i in range(0, 10):
+    for _ in range(0, 10):
         data = sub.consume()
         for d in data:
             print(d)

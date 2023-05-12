@@ -21,7 +21,7 @@ from util.sql import *
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor())
 
         self.rowNum = 10
@@ -51,7 +51,7 @@ class TDTestCase:
         tdSql.checkData(0, 0, self.rowNum)
         # append more data
 
-        col0 = col0 + 1
+        col0 += 1
         for i in range(self.rowNum):
             tdSql.execute("insert into test1 values(%d, %d, %d, %d, %d, %f, %f, %d, 'taosdata%d', '涛思数据%d', %d, %d, %d, %d)" 
                         % (self.ts + i + 10000, col0, i + 1, i + 1, i + 1, i + 0.1, i + 0.1, i % 2, i + 1, i + 1, i + 1, i + 1, i + 1, i + 1))
@@ -62,20 +62,20 @@ class TDTestCase:
         tdSql.checkData(0, 0, self.rowNum)
         tdSql.checkData(1, 0, self.rowNum)
 
-        
-        tdSql.query("select first(col1) from test1 state_window(col1)")  
+
+        tdSql.query("select first(col1) from test1 state_window(col1)")
         tdSql.checkRows(2)
-        col0 = col0 - 1
+        col0 -= 1
         tdSql.checkData(0, 0, col0)
-        col0 = col0 + 1
+        col0 += 1
         tdSql.checkData(1, 0, col0)
 
-        tdSql.query("select first(col2) from test1 state_window(col1)")  
+        tdSql.query("select first(col2) from test1 state_window(col1)")
         tdSql.checkRows(2)
         tdSql.checkData(0, 0, 1)
         tdSql.checkData(1, 0, 1)
 
-        tdSql.query("select count(col1), first(col2) from test1 state_window(col1)")  
+        tdSql.query("select count(col1), first(col2) from test1 state_window(col1)")
         tdSql.checkRows(2)
         tdSql.checkData(0, 0, 10)
         tdSql.checkData(0, 1, 1)
@@ -103,7 +103,7 @@ class TDTestCase:
         
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 tdCases.addWindows(__file__, TDTestCase())
 tdCases.addLinux(__file__, TDTestCase())

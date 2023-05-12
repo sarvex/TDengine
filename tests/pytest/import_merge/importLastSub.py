@@ -21,7 +21,7 @@ from util.dnodes import *
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor(), logSql)
 
     def run(self):
@@ -43,8 +43,7 @@ class TDTestCase:
         tdLog.info("import 5 sequential data")
         startTime = self.startTime
         sqlcmd = ['import into tb1 values']
-        for rid in range(1, 6):
-            sqlcmd.append('(%ld, %d)' % (startTime + rid, rid))
+        sqlcmd.extend('(%ld, %d)' % (startTime + rid, rid) for rid in range(1, 6))
         tdSql.execute(" ".join(sqlcmd))
 
         tdLog.info("================= step3")
@@ -60,8 +59,7 @@ class TDTestCase:
         tdLog.info("import 3 data totally repetitive")
         startTime = self.startTime + 1
         sqlcmd = ['import into tb1 values']
-        for rid in range(1, 4):
-            sqlcmd.append('(%ld, %d)' % (startTime + rid, rid))
+        sqlcmd.extend('(%ld, %d)' % (startTime + rid, rid) for rid in range(1, 4))
         tdSql.execute(" ".join(sqlcmd))
 
         tdLog.info("================= step6")
@@ -70,7 +68,7 @@ class TDTestCase:
 
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 
 tdCases.addWindows(__file__, TDTestCase())

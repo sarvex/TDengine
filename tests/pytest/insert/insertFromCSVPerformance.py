@@ -41,11 +41,19 @@ class insertFromCSVPerformace:
     def writeCSV(self):
         with open('test3.csv','w', encoding='utf-8', newline='') as csvFile:
             writer = csv.writer(csvFile, dialect='excel')
-            for i in range(1000000):
+            for _ in range(1000000):
                 newTimestamp = self.ts + random.randint(10000000, 10000000000) + random.randint(1000, 10000000) + random.randint(1, 1000)
                 d = datetime.datetime.fromtimestamp(newTimestamp / 1000)
                 dt = str(d.strftime("%Y-%m-%d %H:%M:%S.%f"))
-                writer.writerow(["'%s'" % dt, random.randint(1, 100), random.uniform(1, 100), random.randint(1, 100), random.randint(1, 100)])
+                writer.writerow(
+                    [
+                        f"'{dt}'",
+                        random.randint(1, 100),
+                        random.uniform(1, 100),
+                        random.randint(1, 100),
+                        random.randint(1, 100),
+                    ]
+                )
     
     def removCSVHeader(self):
         data = pd.read_csv("ordered.csv")
@@ -54,11 +62,15 @@ class insertFromCSVPerformace:
     
     def createTables(self):
         cursor = self.conn.cursor()
-                    
-        cursor.execute("create database if not exists %s" % self.dbName)
-        cursor.execute("use %s" % self.dbName)
-        cursor.execute("create table if not exists %s(ts timestamp, in_order_time float, out_of_order_time float, commit_id binary(50)) tags(branch binary(50))" % self.stbName)
-        cursor.execute("create table if not exists %s using %s tags('%s')" % (self.branchName, self.stbName, self.branchName))
+
+        cursor.execute(f"create database if not exists {self.dbName}")
+        cursor.execute(f"use {self.dbName}")
+        cursor.execute(
+            f"create table if not exists {self.stbName}(ts timestamp, in_order_time float, out_of_order_time float, commit_id binary(50)) tags(branch binary(50))"
+        )
+        cursor.execute(
+            f"create table if not exists {self.branchName} using {self.stbName} tags('{self.branchName}')"
+        )
 
         cursor.execute("create table if not exists t1(ts timestamp, c1 int, c2 float, c3 int, c4 int)")
         cursor.execute("create table if not exists t2(ts timestamp, c1 int, c2 float, c3 int, c4 int)")
@@ -67,21 +79,21 @@ class insertFromCSVPerformace:
     
     def run(self):
         cursor = self.conn.cursor()
-        cursor.execute("use %s" % self.dbName)
+        cursor.execute(f"use {self.dbName}")
         print("==================== CSV insert performance ====================")
-        
+
         totalTime = 0
-        for i in range(10):
+        for _ in range(10):
             cursor.execute("create table if not exists t1(ts timestamp, c1 int, c2 float, c3 int, c4 int)")
             startTime = time.time()
             cursor.execute("insert into t1 file 'outoforder.csv'")
             totalTime += time.time() - startTime
-            cursor.execute("drop table if exists t1")            
+            cursor.execute("drop table if exists t1")
         out_of_order_time = (float) (totalTime / 10)
         print("Out of Order - Insert time: %f" % out_of_order_time)                      
-        
+
         totalTime = 0
-        for i in range(10):
+        for _ in range(10):
             cursor.execute("create table if not exists t2(ts timestamp, c1 int, c2 float, c3 int, c4 int)")
             startTime = time.time()
             cursor.execute("insert into t2 file 'ordered.csv'")

@@ -21,7 +21,7 @@ import numpy as np
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor())
 
         self.rowNum = 10
@@ -59,7 +59,7 @@ class TDTestCase:
         tdSql.query("select col1 + col2 from test1")
         tdSql.checkRows(11)
         tdSql.checkData(10, 0, None)
-        
+
         tdSql.query("select col1 + col2 * col3 from test1")
         tdSql.checkRows(11)
         tdSql.checkData(10, 0, None)
@@ -93,18 +93,18 @@ class TDTestCase:
         op_list = [ '+' , '-' , '*' , '/' , '%' ]
         err_list = [ 'col7' , 'col8' , 'col9' , 'NULL' ]
         order_lsit = [ ' order by ts ', ' order by ts desc ', ' order by ts asc ']
-        for i in col_list :
-            for j in col_list :
-                for k in op_list :
-                    for l in order_lsit :
-                        sql = " select %s %s %s from test1 %s" % ( i , k , j , l )
+        for i in col_list:
+            for j in col_list:
+                for k in op_list:
+                    for l in order_lsit:
+                        sql = f" select {i} {k} {j} from test1 {l}"
                         if i in err_list or j in err_list:
                             tdSql.error(sql)
                         else:
                             tdSql.query(sql)
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 tdCases.addWindows(__file__, TDTestCase())
 tdCases.addLinux(__file__, TDTestCase())

@@ -24,7 +24,7 @@ from util.sql import *
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor(), logSql)
 
     def run(self):
@@ -38,14 +38,14 @@ class TDTestCase:
         tdLog.info("=============== step1")
         db_name = ''.join(random.choices(chars, k=(dbNameMaxLen + 1)))
         tdLog.info('db_name length %d' % len(db_name))
-        tdLog.info('create database %s' % db_name)
-        tdSql.error('create database %s' % db_name)
+        tdLog.info(f'create database {db_name}')
+        tdSql.error(f'create database {db_name}')
 
         tdLog.info("=============== step2")
         db_name = ''.join(random.choices(chars, k=dbNameMaxLen))
         tdLog.info('db_name length %d' % len(db_name))
-        tdLog.info('create database %s' % db_name)
-        tdSql.execute('create database %s' % db_name)
+        tdLog.info(f'create database {db_name}')
+        tdSql.execute(f'create database {db_name}')
 
         tdSql.query('show databases')
         tdSql.checkRows(1)
@@ -54,8 +54,8 @@ class TDTestCase:
         tdLog.info("=============== step3")
         db_name = ''.join(random.choices(chars, k=(dbNameMaxLen - 1)))
         tdLog.info('db_name length %d' % len(db_name))
-        tdLog.info('create database %s' % db_name)
-        tdSql.execute('create database %s' % db_name)
+        tdLog.info(f'create database {db_name}')
+        tdSql.execute(f'create database {db_name}')
 
         tdSql.query('show databases')
         tdSql.checkRows(2)
@@ -63,7 +63,7 @@ class TDTestCase:
 
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 
 tdCases.addWindows(__file__, TDTestCase())

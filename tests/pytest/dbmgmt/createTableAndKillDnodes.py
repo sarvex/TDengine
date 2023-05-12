@@ -15,7 +15,7 @@ from util.dnodes import *
 class TDTestCase:
 
     def init(self):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdLog.info("prepare cluster")
         tdDnodes.stopAll()
         tdDnodes.deploy(1)
@@ -51,7 +51,7 @@ class TDTestCase:
         cursor = conn.cursor()
         i = 0
         try:
-            sql = "use %s" % (self.db)
+            sql = f"use {self.db}"
             cursor.execute(sql)
             while i < self.tbNum:
                 if (i % self.threadNum == threadId):
@@ -119,15 +119,15 @@ class TDTestCase:
         threadId = 0
         threads = []
         try:
-            tdSql.execute("drop database if exists %s" % (self.db))
+            tdSql.execute(f"drop database if exists {self.db}")
             tdSql.execute(
-                "create database %s replica 2 cache 1024 ablocks 2.0 tblocks 4 tables 1000" %
-                (self.db))
+                f"create database {self.db} replica 2 cache 1024 ablocks 2.0 tblocks 4 tables 1000"
+            )
             tdLog.sleep(3)
-            tdSql.execute("use %s" % (self.db))
+            tdSql.execute(f"use {self.db}")
             tdSql.execute(
-                "create table %s (ts timestamp, c1 bigint, stime timestamp) tags(tg1 bigint)" %
-                (self.stb))
+                f"create table {self.stb} (ts timestamp, c1 bigint, stime timestamp) tags(tg1 bigint)"
+            )
             tdLog.info("Start to create tables")
             while threadId < self.threadNum:
                 tdLog.info("Thread-%d starts to create tables" % (threadId))
@@ -156,17 +156,17 @@ class TDTestCase:
                 1,
                 3,
             )).start()
-        for t in range(len(threads)):
+        for thread in threads:
             tdLog.info("Join threads")
             # threads[t].start()
-            threads[t].join()
+            thread.join()
 
         tdSql.query("show stables")
         tdSql.checkData(0, 4, self.tbNum)
 
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 
 tdCases.addCluster(__file__, TDTestCase())

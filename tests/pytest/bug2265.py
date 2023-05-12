@@ -24,7 +24,7 @@ if __name__ == "__main__":
     testCluster = False
     valgrind = 0
 
-    print("start to execute %s" % __file__)
+    print(f"start to execute {__file__}")
     tdDnodes.init(deployPath)
     tdDnodes.setTestCluster(testCluster)
     tdDnodes.setValgrind(valgrind)
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     tdDnodes.start(1)
     host = '127.0.0.1'
 
-    tdLog.info("Procedures for tdengine deployed in %s" % (host))
+    tdLog.info(f"Procedures for tdengine deployed in {host}")
 
     tdCases.logSql(logSql)
     print('1')
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         config=tdDnodes.getSimCfgPath())
 
     tdSql.init(conn.cursor(), True)
-        
+
     print("==========step1")
     print("create table ")
     tdSql.execute("create database db")
@@ -60,7 +60,7 @@ if __name__ == "__main__":
         data += '(%s,%d,%d,%d)'%(ts+i,i%1000,i%1000,i%1000)
         i+=1
     tdSql.execute(data)
-    
+
     print("==========step4")
     print("insert data batch larger than 32767 ")
     i = 0
@@ -75,11 +75,11 @@ if __name__ == "__main__":
     data = 'insert into t2 values'
     i = 0
     while ((len(data)<(1024*1024)) & (i < 32767 - 1 ) ):
-        data += '(%s,%s)'%(ts+i,'a'*50)
+        data += f"({ts + i},{'a' * 50})"
         i+=1
-    tdSql.error(data)      
+    tdSql.error(data)
     tdSql.close()
-    tdLog.success("%s successfully executed" % __file__)
+    tdLog.success(f"{__file__} successfully executed")
         
    
 

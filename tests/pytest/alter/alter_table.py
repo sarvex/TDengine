@@ -10,7 +10,7 @@ from util.dnodes import *
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor(), logSql)
         self.types = [
             "int",
@@ -48,10 +48,10 @@ class TDTestCase:
                 tdSql.checkData(0, i, self.rowNum * (colIdx - i + 2))
 
             # insert more rows
-            for k in range(self.rowNum):
+            for _ in range(self.rowNum):
                 self.ts += self.step
                 sql = "insert into tb values (%d, %d" % (self.ts, colIdx + 2)
-                for j in range(colIdx + 1):
+                for _ in range(colIdx + 1):
                     sql += ", %d" % (colIdx + 2)
                 sql += ")"
                 tdSql.execute(sql)
@@ -86,10 +86,10 @@ class TDTestCase:
                 tdSql.checkData(0, i, self.rowNum * (colIdx - i + 2))
 
             # insert more rows
-            for k in range(self.rowNum):
+            for _ in range(self.rowNum):
                 self.ts += self.step
                 sql = "insert into tb values (%d, %d" % (self.ts, colIdx + 2)
-                for j in range(colIdx + 1):
+                for _ in range(colIdx + 1):
                     sql += ", %d" % (colIdx + 2)
                 sql += ")"
                 tdSql.execute(sql)
@@ -107,24 +107,24 @@ class TDTestCase:
         db = "db"
 
         # Create db
-        tdSql.execute("drop database if exists %s" % (db))
+        tdSql.execute(f"drop database if exists {db}")
         tdSql.execute("reset query cache")
-        tdSql.execute("create database %s maxrows 200" % (db))
-        tdSql.execute("use %s" % (db))
+        tdSql.execute(f"create database {db} maxrows 200")
+        tdSql.execute(f"use {db}")
 
         # Create a table with one colunm of int type and insert 300 rows
         tdLog.info("create table tb")
         tdSql.execute("create table tb (ts timestamp, c1 int)")
         tdLog.info("Insert %d rows into tb" % (self.rowNum))
-        for k in range(1, self.rowNum + 1):
+        for _ in range(1, self.rowNum + 1):
             self.ts += self.step
             tdSql.execute("insert into tb values (%d, 1)" % (self.ts))
 
         # Alter tb and add a column of smallint type, then query tb to see if
         # all added column are NULL
         self.addColumnAndCount()
-        tdDnodes.stop(1)        
-        tdDnodes.start(1)        
+        tdDnodes.stop(1)
+        tdDnodes.start(1)
         tdSql.query(self.sqlHead + self.sqlTail)
         size = len(self.types) + 2
         for i in range(2, size):             
@@ -140,6 +140,6 @@ class TDTestCase:
         
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 tdCases.addLinux(__file__, TDTestCase())

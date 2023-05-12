@@ -11,17 +11,17 @@ parser.add_argument('-C', metavar='CONNSTR', help='Connection string to use')
 
 args = parser.parse_args()
 
-a = 'DSN=%s'%args.DSN if args.DSN else None
-b = 'UID=%s'%args.UID if args.UID else None
-c = 'PWD=%s'%args.PWD if args.PWD else None
-d = 'Server=%s'%args.Server if args.Server else None
+a = f'DSN={args.DSN}' if args.DSN else None
+b = f'UID={args.UID}' if args.UID else None
+c = f'PWD={args.PWD}' if args.PWD else None
+d = f'Server={args.Server}' if args.Server else None
 conn_str = ';'.join(filter(None, [a,b,c,d])) if args.DSN else None
 conn_str = conn_str if conn_str else args.C
 if not conn_str:
   parser.print_help(file=sys.stderr)
   exit()
 
-print('connecting: [%s]' % conn_str)
+print(f'connecting: [{conn_str}]')
 cnxn = pyodbc.connect(conn_str, autocommit=True)
 cnxn.setdecoding(pyodbc.SQL_CHAR, encoding='utf-8')
 

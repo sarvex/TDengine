@@ -19,7 +19,7 @@ from util.sql import *
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor(), logSql)
 
     def run(self):
@@ -27,20 +27,20 @@ class TDTestCase:
 
         sql = "select server_version()"
         ret = tdSql.query(sql)
-        version = tdSql.getData(0, 0)[0:3]        
+        version = tdSql.getData(0, 0)[:3]
         expectedVersion_dev = "2.0"
         expectedVersion_master = "2.1"
-        if(version == expectedVersion_dev or version == expectedVersion_master):
+        if version in [expectedVersion_dev, expectedVersion_master]:
             tdLog.info("sql:%s, row:%d col:%d data:%s == expect" % (sql, 0, 0, version))
         else:
             tdLog.exit("sql:%s, row:%d col:%d data:%s != expect:%s or %s " % (sql, 0, 0, version, expectedVersion_dev, expectedVersion_master))
 
         sql = "select client_version()"
         ret = tdSql.query(sql)
-        version = tdSql.getData(0, 0)[0:3]        
+        version = tdSql.getData(0, 0)[:3]
         expectedVersion_dev = "2.0"
         expectedVersion_master = "2.1"
-        if(version == expectedVersion_dev or version == expectedVersion_master):
+        if version in [expectedVersion_dev, expectedVersion_master]:
             tdLog.info("sql:%s, row:%d col:%d data:%s == expect" % (sql, 0, 0, version))
         else:
             tdLog.exit("sql:%s, row:%d col:%d data:%s != expect:%s or %s " % (sql, 0, 0, version, expectedVersion_dev, expectedVersion_master))
@@ -48,7 +48,7 @@ class TDTestCase:
 
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 
 tdCases.addWindows(__file__, TDTestCase())

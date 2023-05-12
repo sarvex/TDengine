@@ -34,8 +34,7 @@ class DbConn:
         elif connType == cls.TYPE_REST:
             return DbConnRest(dbTarget)
         else:
-            raise RuntimeError(
-                "Unexpected connection type: {}".format(connType))
+            raise RuntimeError(f"Unexpected connection type: {connType}")
 
     @classmethod
     def createNative(cls, dbTarget) -> DbConn:
@@ -52,7 +51,7 @@ class DbConn:
         self._dbTarget = dbTarget
 
     def __repr__(self):
-        return "[DbConn: type={}, target={}]".format(self._type, self._dbTarget)
+        return f"[DbConn: type={self._type}, target={self._dbTarget}]"
 
     def getLastSql(self):
         return self._lastSql
@@ -64,7 +63,7 @@ class DbConn:
         # below implemented by child classes
         self.openByType()
 
-        Logging.debug("[DB] data connection opened: {}".format(self))
+        Logging.debug(f"[DB] data connection opened: {self}")
         self.isOpen = True
 
     def close(self):
@@ -82,15 +81,17 @@ class DbConn:
         nRows = self.query(sql)
         if nRows != 1:
             raise CrashGenError(
-                "Unexpected result for query: {}, rows = {}".format(sql, nRows), 
-                (CrashGenError.INVALID_EMPTY_RESULT if nRows==0 else CrashGenError.INVALID_MULTIPLE_RESULT)
+                f"Unexpected result for query: {sql}, rows = {nRows}",
+                CrashGenError.INVALID_EMPTY_RESULT
+                if nRows == 0
+                else CrashGenError.INVALID_MULTIPLE_RESULT,
             )
         if self.getResultRows() != 1 or self.getResultCols() != 1:
-            raise RuntimeError("Unexpected result set for query: {}".format(sql))
+            raise RuntimeError(f"Unexpected result set for query: {sql}")
         return self.getQueryResult()[0][0]
 
     def use(self, dbName):
-        self.execute("use {}".format(dbName))
+        self.execute(f"use {dbName}")
 
     def existsDatabase(self, dbName: str):
         ''' Check if a certain database exists '''
@@ -147,8 +148,7 @@ class DbConnRest(DbConn):
         super().__init__(dbTarget)
         self._type = self.TYPE_REST
         restPort = dbTarget.port + 11
-        self._url = "http://{}:{}/rest/sql".format(
-            dbTarget.hostAddr, dbTarget.port + self.REST_PORT_INCREMENT)
+        self._url = f"http://{dbTarget.hostAddr}:{dbTarget.port + self.REST_PORT_INCREMENT}/rest/sql"
         self._result = None
 
     def openByType(self):  # Open connection        
@@ -184,9 +184,7 @@ class DbConnRest(DbConn):
                 rj['desc'], errno)  # todo: check existance of 'desc'
 
         if rj['status'] != 'succ':  # better be this
-            raise RuntimeError(
-                "Unexpected REST return status: {}".format(
-                    rj['status']))
+            raise RuntimeError(f"Unexpected REST return status: {rj['status']}")
 
         nRows = rj['rows'] if ('rows' in rj) else 0
         self._result = rj
@@ -196,10 +194,9 @@ class DbConnRest(DbConn):
         if (not self.isOpen):
             raise RuntimeError(
                 "Cannot execute database commands until connection is open")
-        Logging.debug("[SQL-REST] Executing SQL: {}".format(sql))
+        Logging.debug(f"[SQL-REST] Executing SQL: {sql}")
         nRows = self._doSql(sql)
-        Logging.debug(
-            "[SQL-REST] Execution Result, nRows = {}, SQL = {}".format(nRows, sql))
+        Logging.debug(f"[SQL-REST] Execution Result, nRows = {nRows}, SQL = {sql}")
         return nRows
 
     def query(self, sql):  # return rows affected
@@ -249,7 +246,7 @@ class MyTDSql:
         self._cursor.close()
 
     def _execInternal(self, sql):        
-        startTime = time.time() 
+        startTime = time.time()
         # Logging.debug("Executing SQL: " + sql)
         # ret = None # TODO: use strong type here
         # try: # Let's not capture the error, and let taos.error.ProgrammingError pass through
@@ -257,7 +254,7 @@ class MyTDSql:
         # except taos.error.ProgrammingError as err:
         #     Logging.warning("Taos SQL execution error: {}, SQL: {}".format(err.msg, sql))
         #     raise CrashGenError(err.msg)
-            
+
         # print("\nSQL success: {}".format(sql))
         queryTime =  time.time() - startTime
         # Record the query time
@@ -271,23 +268,15 @@ class MyTDSql:
         # Now write to the shadow database
         if Config.isSet('use_shadow_db'):
             if sql[:11] == "INSERT INTO":
-                if sql[:16] == "INSERT INTO db_0":
-                    sql2 = "INSERT INTO db_s" + sql[16:]
-                    self._cursor.execute(sql2)
-                else:
-                    raise CrashGenError("Did not find db_0 in INSERT statement: {}".format(sql))
-            else: # not an insert statement
-                pass
-
+                if sql[:16] != "INSERT INTO db_0":
+                    raise CrashGenError(f"Did not find db_0 in INSERT statement: {sql}")
+                sql2 = f"INSERT INTO db_s{sql[16:]}"
+                self._cursor.execute(sql2)
             if sql[:12] == "CREATE TABLE":
-                if sql[:17] == "CREATE TABLE db_0":
-                    sql2 = sql.replace('db_0', 'db_s')
-                    self._cursor.execute(sql2)
-                else:
-                    raise CrashGenError("Did not find db_0 in CREATE TABLE statement: {}".format(sql))
-            else: # not an insert statement
-                pass
-        
+                if sql[:17] != "CREATE TABLE db_0":
+                    raise CrashGenError(f"Did not find db_0 in CREATE TABLE statement: {sql}")
+                sql2 = sql.replace('db_0', 'db_s')
+                self._cursor.execute(sql2)
         return ret
 
     def query(self, sql):
@@ -322,11 +311,10 @@ class DbTarget:
         self.port     = port
     
     def __repr__(self):
-        return "[DbTarget: cfgPath={}, host={}:{}]".format(
-            Helper.getFriendlyPath(self.cfgPath), self.hostAddr, self.port)
+        return f"[DbTarget: cfgPath={Helper.getFriendlyPath(self.cfgPath)}, host={self.hostAddr}:{self.port}]"
 
     def getEp(self):
-        return "{}:{}".format(self.hostAddr, self.port)
+        return f"{self.hostAddr}:{self.port}"
 
 class DbConnNative(DbConn):
     # Class variables
@@ -358,14 +346,14 @@ class DbConnNative(DbConn):
             dbTarget = self._dbTarget
             # if not cls._connInfoDisplayed:
             #     cls._connInfoDisplayed = True # updating CLASS variable
-            Logging.debug("Initiating TAOS native connection to {}".format(dbTarget))                    
+            Logging.debug(f"Initiating TAOS native connection to {dbTarget}")
             # Make the connection         
             # self._conn = taos.connect(host=hostAddr, config=cfgPath)  # TODO: make configurable
             # self._cursor = self._conn.cursor()
             # Record the count in the class
             self._tdSql = MyTDSql(dbTarget.hostAddr, dbTarget.cfgPath) # making DB connection
             cls.totalConnections += 1 
-        
+
         self._tdSql.execute('reset query cache')
         # self._cursor.execute('use db') # do this at the beginning of every
 
@@ -390,14 +378,12 @@ class DbConnNative(DbConn):
             traceback.print_stack()
             raise CrashGenError(
                 "Cannot exec SQL unless db connection is open", CrashGenError.DB_CONNECTION_NOT_OPEN)
-        Logging.debug("[SQL] Executing SQL: {}".format(sql))
+        Logging.debug(f"[SQL] Executing SQL: {sql}")
         self._lastSql = sql
         nRows = self._tdSql.execute(sql)
         cls = self.__class__
         cls.totalRequests += 1
-        Logging.debug(
-            "[SQL] Execution Result, nRows = {}, SQL = {}".format(
-                nRows, sql))
+        Logging.debug(f"[SQL] Execution Result, nRows = {nRows}, SQL = {sql}")
         return nRows
 
     def query(self, sql):  # return rows affected
@@ -405,14 +391,12 @@ class DbConnNative(DbConn):
             traceback.print_stack()
             raise CrashGenError(
                 "Cannot query database until connection is open, restarting?", CrashGenError.DB_CONNECTION_NOT_OPEN)
-        Logging.debug("[SQL] Executing SQL: {}".format(sql))
+        Logging.debug(f"[SQL] Executing SQL: {sql}")
         self._lastSql = sql
         nRows = self._tdSql.query(sql)
         cls = self.__class__
         cls.totalRequests += 1
-        Logging.debug(
-            "[SQL] Query Result, nRows = {}, SQL = {}".format(
-                nRows, sql))
+        Logging.debug(f"[SQL] Query Result, nRows = {nRows}, SQL = {sql}")
         return nRows
         # results are in: return self._tdSql.queryResult
 
@@ -446,8 +430,9 @@ class DbManager():
                     "Cannot establish DB connection, please re-run script without parameter, and follow the instructions.")
                 sys.exit(2)
             else:
-                print("Failed to connect to DB, errno = {}, msg: {}"
-                    .format(Helper.convertErrno(err.errno), err.msg))
+                print(
+                    f"Failed to connect to DB, errno = {Helper.convertErrno(err.errno)}, msg: {err.msg}"
+                )
                 raise
         except BaseException:
             print("[=] Unexpected exception")

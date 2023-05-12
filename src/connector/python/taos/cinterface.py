@@ -136,8 +136,14 @@ def _crow_binary_to_python(data, num_of_rows, nbytes=None, micro=False):
     """Function to convert C binary row to python row
     """
     assert(nbytes is not None)
-    return [None if ele.value[0:1] == FieldType.C_BINARY_NULL else ele.value.decode(
-        'utf-8') for ele in (ctypes.cast(data, ctypes.POINTER(ctypes.c_char * nbytes)))[:abs(num_of_rows)]]
+    return [
+        None
+        if ele.value[:1] == FieldType.C_BINARY_NULL
+        else ele.value.decode('utf-8')
+        for ele in (ctypes.cast(data, ctypes.POINTER(ctypes.c_char * nbytes)))[
+            : abs(num_of_rows)
+        ]
+    ]
 
 
 def _crow_nchar_to_python(data, num_of_rows, nbytes=None, micro=False):
@@ -172,7 +178,7 @@ def _crow_binary_to_python_block(data, num_of_rows, nbytes=None, micro=False):
                     ctypes.c_short))[
                 :1].pop()
             tmpstr = ctypes.c_char_p(data + nbytes * i + 2)
-            res.append(tmpstr.value.decode()[0:rbyte])
+            res.append(tmpstr.value.decode()[:rbyte])
         except ValueError:
             res.append(None)
     return res
@@ -414,12 +420,15 @@ class CTaosInterface(object):
         """Consume data of a subscription
         """
         result = ctypes.c_void_p(CTaosInterface.libtaos.taos_consume(sub))
-        fields = []
         pfields = CTaosInterface.fetchFields(result)
-        for i in range(CTaosInterface.libtaos.taos_num_fields(result)):
-            fields.append({'name': pfields[i].name.decode('utf-8'),
-                           'bytes': pfields[i].bytes,
-                           'type': ord(pfields[i].type)})
+        fields = [
+            {
+                'name': pfields[i].name.decode('utf-8'),
+                'bytes': pfields[i].bytes,
+                'type': ord(pfields[i].type),
+            }
+            for i in range(CTaosInterface.libtaos.taos_num_fields(result))
+        ]
         return result, fields
 
     @staticmethod
@@ -432,14 +441,15 @@ class CTaosInterface(object):
     def useResult(result):
         '''Use result after calling self.query
         '''
-        fields = []
         pfields = CTaosInterface.fetchFields(result)
-        for i in range(CTaosInterface.fieldsCount(result)):
-            fields.append({'name': pfields[i].name.decode('utf-8'),
-                           'bytes': pfields[i].bytes,
-                           'type': ord(pfields[i].type)})
-
-        return fields
+        return [
+            {
+                'name': pfields[i].name.decode('utf-8'),
+                'bytes': pfields[i].bytes,
+                'type': ord(pfields[i].type),
+            }
+            for i in range(CTaosInterface.fieldsCount(result))
+        ]
 
     @staticmethod
     def fetchBlock(result, fields):
@@ -452,11 +462,9 @@ class CTaosInterface(object):
             result) == FieldType.C_TIMESTAMP_MICRO)
         blocks = [None] * len(fields)
         fieldL = CTaosInterface.libtaos.taos_fetch_lengths(result)
-        fieldLen = [
-            ele for ele in ctypes.cast(
-                fieldL, ctypes.POINTER(
-                    ctypes.c_int))[
-                :len(fields)]]
+        fieldLen = list(
+            ctypes.cast(fieldL, ctypes.POINTER(ctypes.c_int))[: len(fields)]
+        )
         for i in range(len(fields)):
             data = ctypes.cast(pblock, ctypes.POINTER(ctypes.c_void_p))[i]
             if fields[i]['type'] not in _CONVERT_FUNC_BLOCK:
@@ -469,30 +477,28 @@ class CTaosInterface(object):
     @staticmethod
     def fetchRow(result, fields):
         pblock = ctypes.c_void_p(0)
-        pblock = CTaosInterface.libtaos.taos_fetch_row(result)
-        if pblock:
-            num_of_rows = 1
-            isMicro = (CTaosInterface.libtaos.taos_result_precision(
-                result) == FieldType.C_TIMESTAMP_MICRO)
-            blocks = [None] * len(fields)
-            fieldL = CTaosInterface.libtaos.taos_fetch_lengths(result)
-            fieldLen = [
-                ele for ele in ctypes.cast(
-                    fieldL, ctypes.POINTER(
-                        ctypes.c_int))[
-                    :len(fields)]]
-            for i in range(len(fields)):
-                data = ctypes.cast(pblock, ctypes.POINTER(ctypes.c_void_p))[i]
-                if fields[i]['type'] not in _CONVERT_FUNC:
-                    raise DatabaseError(
-                        "Invalid data type returned from database")
-                if data is None:
-                    blocks[i] = [None]
-                else:
-                    blocks[i] = _CONVERT_FUNC[fields[i]['type']](
-                        data, num_of_rows, fieldLen[i], isMicro)
-        else:
+        if not (pblock := CTaosInterface.libtaos.taos_fetch_row(result)):
             return None, 0
+        num_of_rows = 1
+        isMicro = (CTaosInterface.libtaos.taos_result_precision(
+            result) == FieldType.C_TIMESTAMP_MICRO)
+        blocks = [None] * len(fields)
+        fieldL = CTaosInterface.libtaos.taos_fetch_lengths(result)
+        fieldLen = list(
+            ctypes.cast(fieldL, ctypes.POINTER(ctypes.c_int))[: len(fields)]
+        )
+        for i in range(len(fields)):
+            data = ctypes.cast(pblock, ctypes.POINTER(ctypes.c_void_p))[i]
+            if fields[i]['type'] not in _CONVERT_FUNC:
+                raise DatabaseError(
+                    "Invalid data type returned from database")
+            blocks[i] = (
+                [None]
+                if data is None
+                else _CONVERT_FUNC[fields[i]['type']](
+                    data, num_of_rows, fieldLen[i], isMicro
+                )
+            )
         return blocks, abs(num_of_rows)
 
     @staticmethod
@@ -567,7 +573,7 @@ if __name__ == '__main__':
     conn = cinter.connect()
     result = cinter.query(conn, 'show databases')
 
-    print('Query Affected rows: {}'.format(cinter.affectedRows(result)))
+    print(f'Query Affected rows: {cinter.affectedRows(result)}')
 
     fields = CTaosInterface.useResult(result)
 

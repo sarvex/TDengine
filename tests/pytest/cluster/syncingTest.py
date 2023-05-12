@@ -24,27 +24,27 @@ class ClusterTestcase:
         
         nodes = Nodes()
         ctest = ClusterTest(nodes.node1.hostName)
-        ctest.connectDB()        
+        ctest.connectDB()
         ctest.createSTable(1)
         ctest.run()
         tdSql.init(ctest.conn.cursor(), False)
-        
-        
-        tdSql.execute("use %s" % ctest.dbName)        
-        tdSql.execute("alter database %s replica 3" % ctest.dbName)
-        
+
+
+        tdSql.execute(f"use {ctest.dbName}")
+        tdSql.execute(f"alter database {ctest.dbName} replica 3")
+
         for i in range(100):
             tdSql.execute("drop table t%d" % i)
-        
+
         for i in range(100):
             tdSql.execute("create table a%d using meters tags(1)" % i)
-        
+
         tdSql.execute("alter table meters add col col5 int")
         tdSql.execute("alter table meters drop col col5 int")
-        tdSql.execute("drop database %s" % ctest.dbName)
-        
+        tdSql.execute(f"drop database {ctest.dbName}")
+
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 ct = ClusterTestcase()
 ct.run()

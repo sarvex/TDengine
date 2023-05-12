@@ -31,53 +31,51 @@ def v_print(msg: str, arg: str):
 @dispatch(str, int)
 def v_print(msg: str, arg: int):
     if verbose:
-        print(msg % int(arg))
+        print(msg % arg)
 
 
 @dispatch(str, int, int)
 def v_print(msg: str, arg1: int, arg2: int):
     if verbose:
-        print(msg % (int(arg1), int(arg2)))
+        print(msg % (arg1, arg2))
 
 
 @dispatch(str, int, int, int)
 def v_print(msg: str, arg1: int, arg2: int, arg3: int):
     if verbose:
-        print(msg % (int(arg1), int(arg2), int(arg3)))
+        print(msg % (arg1, arg2, arg3))
 
 
 @dispatch(str, int, int, int, int)
 def v_print(msg: str, arg1: int, arg2: int, arg3: int, arg4: int):
     if verbose:
-        print(msg % (int(arg1), int(arg2), int(arg3), int(arg4)))
+        print(msg % (arg1, arg2, arg3, arg4))
 
 
 def isHiveMQInstalled():
     v_print("%s", "Check if HiveMQ installed")
     defaultHiveMQPath = "/opt/hivemq*"
-    hiveMQDir = glob.glob(defaultHiveMQPath)
-    if (len(hiveMQDir) == 0):
+    if hiveMQDir := glob.glob(defaultHiveMQPath):
+        v_print("HiveMQ installed at %s", hiveMQDir[0])
+    else:
         v_print("%s", "ERROR: HiveMQ NOT found")
         return False
-    else:
-        v_print("HiveMQ installed at %s", hiveMQDir[0])
     return True
 
 
 def isMosquittoInstalled():
     v_print("%s", "Check if mosquitto installed")
-    if not which('mosquitto_pub'):
-        v_print("%s", "ERROR: mosquitto is NOT installed")
-        return False
-    else:
+    if which('mosquitto_pub'):
         return True
+    v_print("%s", "ERROR: mosquitto is NOT installed")
+    return False
 
 
 def installExtension():
     currentDir = os.getcwd()
     extDir = 'src/connector/hivemq-tdengine-extension'
     os.chdir('../..')
-    os.system('git submodule update --init -- %s' % extDir)
+    os.system(f'git submodule update --init -- {extDir}')
     os.chdir(extDir)
     v_print("%s", "build extension..")
     os.system('mvn clean package')
@@ -87,15 +85,15 @@ def installExtension():
 
     defaultHiveMQPath = "/opt/hivemq*"
     hiveMQDir = glob.glob(defaultHiveMQPath)
-    extPath = hiveMQDir[0] + '/extensions'
+    extPath = f'{hiveMQDir[0]}/extensions'
 
-    tdExtDir = glob.glob(extPath + '/hivemq-tdengine-extension')
+    tdExtDir = glob.glob(f'{extPath}/hivemq-tdengine-extension')
     if len(tdExtDir):
         v_print("%s", "delete exist extension..")
-        os.system('rm -rf %s' % tdExtDir[0])
+        os.system(f'rm -rf {tdExtDir[0]}')
 
     v_print("%s", "unzip extension..")
-    os.system('unzip %s -d %s' % (tdExtensionZipDir[0], extPath))
+    os.system(f'unzip {tdExtensionZipDir[0]} -d {extPath}')
 
     os.chdir(currentDir)
 
@@ -103,16 +101,10 @@ def installExtension():
 def stopProgram(prog: str):
     psCmd = "ps ax|grep -w %s| grep -v grep | awk '{print $1}'" % prog
 
-    processID = subprocess.check_output(
-        psCmd, shell=True).decode("utf-8")
-
-    while(processID):
-        killCmd = "kill -TERM %s > /dev/null 2>&1" % processID
+    while processID := subprocess.check_output(psCmd, shell=True).decode("utf-8"):
+        killCmd = f"kill -TERM {processID} > /dev/null 2>&1"
         os.system(killCmd)
         time.sleep(1)
-        processID = subprocess.check_output(
-            psCmd, shell=True).decode("utf-8")
-    pass
 
 
 def stopHiveMQ():
@@ -123,28 +115,23 @@ def stopHiveMQ():
 def checkProgramRunning(prog: str):
     psCmd = "ps ax|grep -w %s| grep -v grep | awk '{print $1}'" % prog
 
-    processID = subprocess.check_output(
-        psCmd, shell=True).decode("utf-8")
-
-    if not processID:
-        v_print("ERROR: %s is NOT running", prog)
-        return False
-    else:
+    if processID := subprocess.check_output(psCmd, shell=True).decode("utf-8"):
         return True
+    v_print("ERROR: %s is NOT running", prog)
+    return False
 
 
 def runHiveMQ():
     defaultHiveMQPath = "/opt/hivemq*"
     hiveMQDir = glob.glob(defaultHiveMQPath)
-    runPath = hiveMQDir[0] + '/bin/run.sh > /dev/null &'
+    runPath = f'{hiveMQDir[0]}/bin/run.sh > /dev/null &'
     os.system(runPath)
     time.sleep(10)
 
     if not checkProgramRunning("hivemq.jar"):
         return False
-    else:
-        v_print("%s", "hivemq is running")
-        return True
+    v_print("%s", "hivemq is running")
+    return True
 
 
 def getBuildPath():
@@ -175,41 +162,40 @@ def runTDengine():
         v_print("%s", "ERROR: taosd NOT found!")
         sys.exit(1)
     else:
-        v_print("%s", "taosd found in %s" % buildPath)
+        v_print("%s", f"taosd found in {buildPath}")
 
-    binPath = buildPath + "/build/bin/taosd"
+    binPath = f"{buildPath}/build/bin/taosd"
 
-    os.system('%s > /dev/null &' % binPath)
+    os.system(f'{binPath} > /dev/null &')
     time.sleep(10)
     if not checkProgramRunning("taosd"):
         return False
-    else:
-        v_print("%s", "TDengine is running")
-        return True
+    v_print("%s", "TDengine is running")
+    return True
 
 
 
 def reCreateDatabase():
     buildPath = getBuildPath()
-    binPath = buildPath + "/build/bin/taos"
+    binPath = f"{buildPath}/build/bin/taos"
 
-    os.system('%s -s "DROP DATABASE IF EXISTS hivemq"' % binPath)
-    os.system('%s -s "CREATE DATABASE IF NOT EXISTS hivemq"' % binPath)
+    os.system(f'{binPath} -s "DROP DATABASE IF EXISTS hivemq"')
+    os.system(f'{binPath} -s "CREATE DATABASE IF NOT EXISTS hivemq"')
 
 
 def sendMqttMsg(topic: str, payload: str):
-    testStr = 'mosquitto_pub -t %s -m "%s"' % (topic, payload)
+    testStr = f'mosquitto_pub -t {topic} -m "{payload}"'
     os.system(testStr)
     time.sleep(3)
 
 
 def checkTDengineData(topic: str, payload: str):
     buildPath = getBuildPath()
-    binPath = buildPath + "/build/bin/taos"
+    binPath = f"{buildPath}/build/bin/taos"
 
     output = subprocess.check_output(
-        '%s -s "select * from hivemq.mqtt_payload"' %
-        binPath, shell=True).decode('utf-8')
+        f'{binPath} -s "select * from hivemq.mqtt_payload"', shell=True
+    ).decode('utf-8')
     if (topic in output) and (payload in output):
         v_print("%s", output)
         return True

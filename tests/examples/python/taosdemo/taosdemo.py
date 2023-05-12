@@ -53,43 +53,43 @@ def v_print(msg: str, arg1: str, arg2: str, arg3: str, arg4: str):
 @dispatch(str, int)
 def v_print(msg: str, arg: int):
     if verbose:
-        print(msg % int(arg))
+        print(msg % arg)
 
 
 @dispatch(str, int, str)
 def v_print(msg: str, arg1: int, arg2: str):
     if verbose:
-        print(msg % (int(arg1), str(arg2)))
+        print(msg % (arg1, arg2))
 
 
 @dispatch(str, str, int)
 def v_print(msg: str, arg1: str, arg2: int):
     if verbose:
-        print(msg % (arg1, int(arg2)))
+        print(msg % (arg1, arg2))
 
 
 @dispatch(str, int, int)
 def v_print(msg: str, arg1: int, arg2: int):
     if verbose:
-        print(msg % (int(arg1), int(arg2)))
+        print(msg % (arg1, arg2))
 
 
 @dispatch(str, int, int, str)
 def v_print(msg: str, arg1: int, arg2: int, arg3: str):
     if verbose:
-        print(msg % (int(arg1), int(arg2), str(arg3)))
+        print(msg % (arg1, arg2, arg3))
 
 
 @dispatch(str, int, int, int)
 def v_print(msg: str, arg1: int, arg2: int, arg3: int):
     if verbose:
-        print(msg % (int(arg1), int(arg2), int(arg3)))
+        print(msg % (arg1, arg2, arg3))
 
 
 @dispatch(str, int, int, int, int)
 def v_print(msg: str, arg1: int, arg2: int, arg3: int, arg4: int):
     if verbose:
-        print(msg % (int(arg1), int(arg2), int(arg3), int(arg4)))
+        print(msg % (arg1, arg2, arg3, arg4))
 
 
 def restful_execute(host: str, port: int, user: str, password: str, cmd: str):
@@ -109,7 +109,7 @@ def restful_execute(host: str, port: int, user: str, password: str, cmd: str):
                 sort_keys=True,
                 indent=2))
     else:
-        print("resp: %s" % json.dumps(resp.json()))
+        print(f"resp: {json.dumps(resp.json())}")
 
 
 def query_func(process: int, thread: int, cmd: str):
@@ -125,10 +125,7 @@ def query_func(process: int, thread: int, cmd: str):
                 oneMoreHost, port, user, password, cmd)
     else:
         v_print("%s%s%s", "Send ", cmd, " to the host")
-        if native:
-            pass
-#            cursor.execute(cmd)
-        else:
+        if not native:
             restful_execute(
                 host, port, user, password, cmd)
 
@@ -145,14 +142,14 @@ def query_data_process(cmd: str):
                 config=configDir)
             v_print("conn: %s", str(conn.__class__))
         except Exception as e:
-            print("Error: %s" % e.args[0])
+            print(f"Error: {e.args[0]}")
             sys.exit(1)
 
         try:
             cursor = conn.cursor()
             v_print("cursor:%d %s", id(cursor), str(cursor.__class__))
         except Exception as e:
-            print("Error: %s" % e.args[0])
+            print(f"Error: {e.args[0]}")
             conn.close()
             sys.exit(1)
 
@@ -166,7 +163,7 @@ def query_data_process(cmd: str):
                 print(col)
         except Exception as e:
             conn.close()
-            print("Error: %s" % e.args[0])
+            print(f"Error: {e.args[0]}")
             sys.exit(1)
 
     else:
@@ -202,9 +199,9 @@ def create_stb():
 def use_database():
 
     if native:
-        cursor.execute("USE %s" % current_db)
+        cursor.execute(f"USE {current_db}")
     else:
-        restful_execute(host, port, user, password, "USE %s" % current_db)
+        restful_execute(host, port, user, password, f"USE {current_db}")
 
 
 def create_databases():
@@ -226,13 +223,11 @@ def create_databases():
 def drop_tables():
     # TODO
     v_print("TODO: drop tables total %d", numOfTb)
-    pass
 
 
 def drop_stable():
     # TODO
     v_print("TODO: drop stables total %d", numOfStb)
-    pass
 
 
 def drop_databases():
@@ -261,7 +256,7 @@ def insert_func(process: int, thread: int):
 
     # generate uuid
     uuid_int = random.randint(0, numOfTb + 1)
-    uuid = "%s" % uuid_int
+    uuid = f"{uuid_int}"
     v_print("uuid is: %s", uuid)
 
     # establish connection if native
@@ -275,14 +270,14 @@ def insert_func(process: int, thread: int):
                 config=configDir)
             v_print("conn: %s", str(conn.__class__))
         except Exception as e:
-            print("Error: %s" % e.args[0])
+            print(f"Error: {e.args[0]}")
             sys.exit(1)
 
         try:
             cursor = conn.cursor()
             v_print("cursor:%d %s", id(cursor), str(cursor.__class__))
         except Exception as e:
-            print("Error: %s" % e.args[0])
+            print(f"Error: {e.args[0]}")
             conn.close()
             sys.exit(1)
 
@@ -317,7 +312,7 @@ def insert_func(process: int, thread: int):
                     break
 
         except Exception as e:
-            print("Error: %s" % e.args[0])
+            print(f"Error: {e.args[0]}")
 
         cmd = ' '.join(sqlCmd)
 
@@ -382,7 +377,7 @@ def insert_data_process(lock, i: int, begin: int, end: int):
     if (threads < (end - begin)):
         for j in range(begin, end, threads):
             with ThreadPoolExecutor(max_workers=threads) as executor:
-                k = end if ((j + threads) > end) else (j + threads)
+                k = min(j + threads, end)
                 workers = [
                     executor.submit(
                         insert_func,
@@ -426,37 +421,38 @@ def query_db(i):
 def printConfig():
 
     print("###################################################################")
-    print("# Use native interface:              %s" % native)
-    print("# Server IP:                         %s" % host)
+    print(f"# Use native interface:              {native}")
+    print(f"# Server IP:                         {host}")
     if native:
-        print("# Server port:                       %s" % port)
+        print(f"# Server port:                       {port}")
     else:
-        print("# Server port:                       %s" % restPort)
+        print(f"# Server port:                       {restPort}")
 
-    print("# Configuration Dir:                 %s" % configDir)
-    print("# User:                              %s" % user)
-    print("# Password:                          %s" % password)
-    print("# Number of Columns per record:      %s" % colsPerRecord)
-    print("# Number of Threads:                 %s" % threads)
-    print("# Number of Processes:               %s" % processes)
-    print("# Number of Tables:                  %s" % numOfTb)
-    print("# Number of records per Table:       %s" % numOfRec)
-    print("# Records/Request:                   %s" % batch)
-    print("# Database name:                     %s" % dbName)
-    print("# Replica:                           %s" % replica)
-    print("# Use STable:                        %s" % useStable)
-    print("# Table prefix:                      %s" % tbName)
+    print(f"# Configuration Dir:                 {configDir}")
+    print(f"# User:                              {user}")
+    print(f"# Password:                          {password}")
+    print(f"# Number of Columns per record:      {colsPerRecord}")
+    print(f"# Number of Threads:                 {threads}")
+    print(f"# Number of Processes:               {processes}")
+    print(f"# Number of Tables:                  {numOfTb}")
+    print(f"# Number of records per Table:       {numOfRec}")
+    print(f"# Records/Request:                   {batch}")
+    print(f"# Database name:                     {dbName}")
+    print(f"# Replica:                           {replica}")
+    print(f"# Use STable:                        {useStable}")
+    print(f"# Table prefix:                      {tbName}")
     if useStable:
-        print("# STable prefix:                     %s" % stbName)
+        print(f"# STable prefix:                     {stbName}")
 
-    print("# Data order:                        %s" % outOfOrder)
-    print("# Data out of order rate:            %s" % rateOOOO)
-    print("# Delete method:                     %s" % deleteMethod)
-    print("# Query command:                     %s" % queryCmd)
-    print("# Insert Only:                       %s" % insertOnly)
-    print("# Verbose output                     %s" % verbose)
-    print("# Test time:                         %s" %
-          datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+    print(f"# Data order:                        {outOfOrder}")
+    print(f"# Data out of order rate:            {rateOOOO}")
+    print(f"# Delete method:                     {deleteMethod}")
+    print(f"# Query command:                     {queryCmd}")
+    print(f"# Insert Only:                       {insertOnly}")
+    print(f"# Verbose output                     {verbose}")
+    print(
+        f'# Test time:                         {datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")}'
+    )
     print("###################################################################")
 
 

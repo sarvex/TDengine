@@ -24,21 +24,21 @@ class ClusterTestcase:
         
         nodes = Nodes()
         ctest = ClusterTest(nodes.node1.hostName)
-        ctest.connectDB()        
+        ctest.connectDB()
         ctest.createSTable(3)
         ctest.run()
         tdSql.init(ctest.conn.cursor(), False)
-        
-        tdSql.execute("use %s" % ctest.dbName) 
-        
-        nodes.node2.stopTaosd()                        
+
+        tdSql.execute(f"use {ctest.dbName}") 
+
+        nodes.node2.stopTaosd()
         for i in range(100):
             tdSql.execute("drop table t%d" % i)
-        
+
         nodes.node2.startTaosd()
         tdSql.query("show tables")
         tdSql.checkRows(9900)
-        
+
         nodes.node2.stopTaosd()
         for i in range(10):
             tdSql.execute("create table a%d using meters tags(2)" % i)
@@ -47,19 +47,19 @@ class ClusterTestcase:
         tdSql.query("show tables")
         tdSql.checkRows(9910)
 
-        nodes.node2.stopTaosd()        
+        nodes.node2.stopTaosd()
         tdSql.execute("alter table meters add col col6 int")
         nodes.node2.startTaosd()        
-        
-        nodes.node2.stopTaosd()        
-        tdSql.execute("drop database %s" % ctest.dbName)
-        
+
+        nodes.node2.stopTaosd()
+        tdSql.execute(f"drop database {ctest.dbName}")
+
         nodes.node2.startTaosd()
         tdSql.query("show databases")
         tdSql.checkRows(0)
-        
+
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 ct = ClusterTestcase()
 ct.run()

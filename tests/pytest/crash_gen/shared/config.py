@@ -37,6 +37,4 @@ class Config:
     @classmethod
     def isSet(cls, cfgKey):
         cfg = cls.getConfig()
-        if cfgKey not in cfg:
-            return False
-        return cfg.__getattribute__(cfgKey)
+        return False if cfgKey not in cfg else cfg.__getattribute__(cfgKey)

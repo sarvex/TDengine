@@ -21,7 +21,7 @@ import numpy as np
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor())
 
         self.rowNum = 10
@@ -40,19 +40,19 @@ class TDTestCase:
         # arithmetic verifacation
         tdSql.query("select 0.1 + 0.1 from test")
         tdSql.checkRows(self.rowNum * 2)
-        for i in range(self.rowNum * 2):
+        for _ in range(self.rowNum * 2):
             tdSql.checkData(0, 0, 0.20000000)
-        
+
         tdSql.query("select 4 * avg(col1) from test")
-        tdSql.checkRows(1)        
+        tdSql.checkRows(1)
         tdSql.checkData(0, 0, 22)
 
         tdSql.query("select 4 * sum(col1) from test")
-        tdSql.checkRows(1)        
+        tdSql.checkRows(1)
         tdSql.checkData(0, 0, 440)
 
         tdSql.query("select 4 * avg(col1) * sum(col2) from test")
-        tdSql.checkRows(1)        
+        tdSql.checkRows(1)
         tdSql.checkData(0, 0, 2420)
 
         tdSql.query("select 4 * avg(col1) * sum(col2) from test group by loc")
@@ -65,7 +65,7 @@ class TDTestCase:
 
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 tdCases.addWindows(__file__, TDTestCase())
 tdCases.addLinux(__file__, TDTestCase())

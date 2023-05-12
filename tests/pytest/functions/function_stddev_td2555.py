@@ -21,7 +21,7 @@ import numpy as np
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor())
 
         self.rowNum = 100
@@ -38,11 +38,11 @@ class TDTestCase:
         self.clist14 = []
     
     def getData(self):
-        for i in range(tdSql.queryRows):
+        for _ in range(tdSql.queryRows):
             for j in range(6):
-                exec('self.clist{}.append(tdSql.queryResult[i][j+1])'.format(j+1))
+                exec(f'self.clist{j + 1}.append(tdSql.queryResult[i][j+1])')
             for j in range(11,15):
-                exec('self.clist{}.append(tdSql.queryResult[i][j-1])'.format(j))
+                exec(f'self.clist{j}.append(tdSql.queryResult[i][j-1])')
         
     def run(self):
         tdSql.prepare()
@@ -70,16 +70,16 @@ class TDTestCase:
             ' '
         ]
         for condition in con_list:
-            tdSql.query("select * from test %s"%(condition))
+            tdSql.query(f"select * from test {condition}")
             self.getData()
             for i in range(6):
-                exec('tdSql.query("select stddev(col{}) from test {}")'.format(i+1,condition))
-                exec('tdSql.checkData(0, 0, np.std(self.clist{}))'.format(i+1))
-                exec('self.clist{}.clear()'.format(i+1))
+                exec(f'tdSql.query("select stddev(col{i + 1}) from test {condition}")')
+                exec(f'tdSql.checkData(0, 0, np.std(self.clist{i + 1}))')
+                exec(f'self.clist{i + 1}.clear()')
             for i in range(11,15):
-                exec('tdSql.query("select stddev(col{}) from test {}")'.format(i,condition))
-                exec('tdSql.checkData(0, 0, np.std(self.clist{}))'.format(i))
-                exec('self.clist{}.clear()'.format(i))
+                exec(f'tdSql.query("select stddev(col{i}) from test {condition}")')
+                exec(f'tdSql.checkData(0, 0, np.std(self.clist{i}))')
+                exec(f'self.clist{i}.clear()')
         print('step 2')
         con_group_list = {
             ' cid = 2 and ts >=now - 1d and ts <now group by tbname':2,
@@ -89,17 +89,17 @@ class TDTestCase:
         result = [6.922186552,6.922186552,6.922186552,6.922186552,7.614405212,10.383279829]
         for key,value in con_group_list.items():
             for i in range(6):
-                    exec('tdSql.query("select stddev(col{}) from test where {}")'.format(i+1,key))
-                    for j in range(value):
-                        tdSql.checkData(j, 0, result[i])
+                exec(f'tdSql.query("select stddev(col{i + 1}) from test where {key}")')
+                for j in range(value):
+                    tdSql.checkData(j, 0, result[i])
             for i in range(11,15):
-                    exec('tdSql.query("select stddev(col{}) from test where {}")'.format(i,key))
-                    for j in range(value):
-                        tdSql.checkData(j, 0, result[0])
+                exec(f'tdSql.query("select stddev(col{i}) from test where {key}")')
+                for j in range(value):
+                    tdSql.checkData(j, 0, result[0])
                       
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 tdCases.addWindows(__file__, TDTestCase())
 tdCases.addLinux(__file__, TDTestCase())

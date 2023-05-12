@@ -21,7 +21,7 @@ from util.dnodes import *
 
 class TDTestCase:
     def init(self):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdLog.info("prepare cluster")
         tdDnodes.stopAll()
         tdDnodes.deploy(1)
@@ -123,7 +123,7 @@ class TDTestCase:
     def stop(self):
         tdSql.close()
         self.conn.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 
 tdCases.addCluster(__file__, TDTestCase())

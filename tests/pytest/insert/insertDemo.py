@@ -6,7 +6,7 @@ import multiprocessing
 def taos_excute(table, connect_host):
     conn = taos.connect(host=connect_host, user="root", password="taosdata", config="/etc/taos", database='test')
     cursor = conn.cursor()
-    for i in range(1000000):
+    for _ in range(1000000):
         pk = random.randint(100001, 300000)
         time_now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         col1 = random.randint(1, 10000)

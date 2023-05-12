@@ -50,7 +50,7 @@ if __name__ == "__main__":
             elif (value.upper() == "FALSE"):
                 logSql = False
             else:
-                tdLog.printNoPrefix("logSql value %s is invalid" % logSql)
+                tdLog.printNoPrefix(f"logSql value {logSql} is invalid")
                 sys.exit(0)
 
         if key in ['-g', '--valgrind']:
@@ -60,27 +60,17 @@ if __name__ == "__main__":
             stop = 1
 
     if (stop != 0):
-        if (valgrind == 0):
-            toBeKilled = "taosd"
-        else:
-            toBeKilled = "valgrind.bin"
-
+        toBeKilled = "taosd" if (valgrind == 0) else "valgrind.bin"
         killCmd = "ps -ef|grep -w %s| grep -v grep | awk '{print $2}' | xargs kill -HUP > /dev/null 2>&1" % toBeKilled
 
         psCmd = "ps -ef|grep -w %s| grep -v grep | awk '{print $2}'" % toBeKilled
-        processID = subprocess.check_output(psCmd, shell=True)
-
-        while(processID):
+        while processID := subprocess.check_output(psCmd, shell=True):
             os.system(killCmd)
             time.sleep(1)
-            processID = subprocess.check_output(psCmd, shell=True)
-
         for port in range(6030, 6041):
             usePortPID = "lsof -i tcp:%d | grep LISTEn | awk '{print $2}'" % port
-            processID = subprocess.check_output(usePortPID, shell=True)
-
-            if processID:
-                killCmd = "kill -TERM %s" % processID
+            if processID := subprocess.check_output(usePortPID, shell=True):
+                killCmd = f"kill -TERM {processID}"
                 os.system(killCmd)
             fuserCmd = "fuser -k -n tcp %d" % port
             os.system(fuserCmd)
@@ -101,7 +91,7 @@ if __name__ == "__main__":
 
     host = '127.0.0.1'
 
-    tdLog.info("Procedures for tdengine deployed in %s" % (host))
+    tdLog.info(f"Procedures for tdengine deployed in {host}")
 
     tdCases.logSql(logSql)
 
@@ -127,5 +117,5 @@ if __name__ == "__main__":
             "CREATE TABLE IF NOT EXISTS tb99 (ts TIMESTAMP, temperature INT, humidity FLOAT)")
     tdSql.query("SELECT * FROM tb99")
     tdSql.checkRows(0)
-    
+
     conn.close()

@@ -21,7 +21,7 @@ import numpy as np
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor())
 
         self.rowNum = 10
@@ -31,20 +31,20 @@ class TDTestCase:
         types = ["tinyint", "tinyint unsigned", "smallint", "smallint unsigned", "int", "int unsigned", "bigint", "bigint unsigned", "float", "double", "bool", "binary(20)", "nchar(20)"]
 
         for type in types:
-            print("============== create table using %s type ================" % type)
+            print(f"============== create table using {type} type ================")
             tdSql.execute("drop table if exists stb")
-            tdSql.execute("create table stb(ts timestamp, col %s) tags (id int)" % type)
+            tdSql.execute(f"create table stb(ts timestamp, col {type}) tags (id int)")
             tdSql.execute("create table tb1 using stb tags(1)")
             tdSql.execute("create table tb2 using stb tags(2)")
 
-            if type == "tinyint" or type == "smallint" or type == "int" or type == "bigint":
+            if type in ["tinyint", "smallint", "int", "bigint"]:
                 tdSql.execute("insert into tb1 values(%d, 1)(%d, 11)(%d, 21)" % (self.ts, self.ts + 10000, self.ts + 20000))
                 tdSql.execute("insert into tb1 values(%d, -1)(%d, -11)(%d, -21)" % (self.ts + 30000, self.ts + 40000, self.ts + 50000))
                 tdSql.execute("insert into tb2 values(%d, 10)(%d, 20)(%d, 30)" % (self.ts + 60000, self.ts + 70000, self.ts + 80000))
                 tdSql.execute("insert into tb2 values(%d, -10)(%d, -20)(%d, -30)" % (self.ts + 90000, self.ts + 1000000, self.ts + 1100000))
 
                 tdSql.execute("insert into tb3 using stb tags(3) values(%d, 10)" % (self.ts + 1200000))
-                
+
                 tdSql.query("select derivative(col, 1s, 1) from stb group by tbname")
                 tdSql.checkRows(4)
 
@@ -70,8 +70,13 @@ class TDTestCase:
 
                 tdSql.query("select derivative(col, 10s, 0) from tb3")
                 tdSql.checkRows(0)
-                
-            elif type == "tinyint unsigned" or type == "smallint unsigned" or type == "int unsigned" or type == "bigint unsigned":
+
+            elif type in [
+                "tinyint unsigned",
+                "smallint unsigned",
+                "int unsigned",
+                "bigint unsigned",
+            ]:
                 tdSql.execute("insert into tb1 values(%d, 1)(%d, 11)(%d, 21)" % (self.ts, self.ts + 10000, self.ts + 20000))                
                 tdSql.execute("insert into tb2 values(%d, 10)(%d, 20)(%d, 30)" % (self.ts + 60000, self.ts + 70000, self.ts + 80000))
 
@@ -82,7 +87,7 @@ class TDTestCase:
                 tdSql.error("select derivative(col, 10s, 0) from tb2")
                 tdSql.error("select derivative(col, 999ms, 0) from tb2")
 
-            elif type == "float" or type == "double":
+            elif type in ["float", "double"]:
                 tdSql.execute("insert into tb1 values(%d, 1.0)(%d, 11.0)(%d, 21.0)" % (self.ts, self.ts + 10000, self.ts + 20000))
                 tdSql.execute("insert into tb2 values(%d, 3.0)(%d, 4.0)(%d, 5.0)" % (self.ts + 60000, self.ts + 70000, self.ts + 80000))
 
@@ -132,7 +137,7 @@ class TDTestCase:
               
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 
 tdCases.addWindows(__file__, TDTestCase())

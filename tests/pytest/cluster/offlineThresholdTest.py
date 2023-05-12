@@ -46,9 +46,9 @@ class ClusterTestcase:
 
         nodes.removeConfigs("offlineThreshold", "10")
         nodes.restartAllTaosd()
-        
+
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 ct = ClusterTestcase()
 ct.run()

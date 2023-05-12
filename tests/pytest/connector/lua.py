@@ -19,7 +19,7 @@ from util.sql import *
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor(), logSql)
 
     def getBuildPath(self):
@@ -39,11 +39,10 @@ class TDTestCase:
         return buildPath
 
     def isLuaInstalled(self):
-        if not which('lua'):
-            tdLog.exit("Lua not found!")
-            return False
-        else:
+        if which('lua'):
             return True
+        tdLog.exit("Lua not found!")
+        return False
 
     def run(self):
         tdSql.prepare()
@@ -55,9 +54,9 @@ class TDTestCase:
         if (buildPath == ""):
             tdLog.exit("taosd not found!")
         else:
-            tdLog.info("taosd found in %s" % buildPath)
+            tdLog.info(f"taosd found in {buildPath}")
 
-        targetPath = buildPath + "/../tests/examples/lua"
+        targetPath = f"{buildPath}/../tests/examples/lua"
         tdLog.info(targetPath)
         currentPath = os.getcwd()
         os.chdir(targetPath)
@@ -66,7 +65,7 @@ class TDTestCase:
 
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 
 #tdCases.addWindows(__file__, TDTestCase())

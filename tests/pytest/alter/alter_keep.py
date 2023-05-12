@@ -19,7 +19,7 @@ from util.sql import *
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor(), logSql)
     
     def alterKeepCommunity(self):
@@ -158,7 +158,7 @@ class TDTestCase:
         tdSql.checkRows(3)
 
         rowNum = 3
-        for i in range(30):
+        for _ in range(30):
             rowNum += 1
             tdSql.execute('alter database db keep 20,20,20')
             tdSql.execute('alter database db keep 40,40,40')
@@ -195,7 +195,7 @@ class TDTestCase:
 
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 
 tdCases.addWindows(__file__, TDTestCase())

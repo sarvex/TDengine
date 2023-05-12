@@ -20,7 +20,7 @@ from datetime import datetime
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor(), logSql)
 
     def getBuildPath(self):
@@ -47,27 +47,26 @@ class TDTestCase:
         if (buildPath == ""):
             tdLog.exit("taosd not found!")
         else:
-            tdLog.info("taosd found in %s" % buildPath)
-        binPath = buildPath + "/build/bin/"
+            tdLog.info(f"taosd found in {buildPath}")
+        binPath = f"{buildPath}/build/bin/"
 
         #write 5M rows into db, then restart to force the data move into disk.
         #create 500 tables
-        os.system("%staosdemo -f tools/taosdemoAllTest/insert_5M_rows.json -y " % binPath)
+        os.system(
+            f"{binPath}taosdemo -f tools/taosdemoAllTest/insert_5M_rows.json -y "
+        )
         tdDnodes.stop(1)
         tdDnodes.start(1)
         tdSql.execute('use db')
 
-        #prepare to query 500 tables last_row()
-        tableName = []
-        for i in range(500):
-            tableName.append(f"stb_{i}")
+        tableName = [f"stb_{i}" for i in range(500)]
         tdSql.execute('use db')
         lastRow_Off_start = datetime.now()
 
         slow = 0 #count time where lastRow on is slower
         for i in range(5): 
             #switch lastRow to off and check
-            tdSql.execute('alter database db cachelast 0') 
+            tdSql.execute('alter database db cachelast 0')
             tdSql.query('show databases')
             tdSql.checkData(0,15,0)
 
@@ -82,27 +81,28 @@ class TDTestCase:
             tdSql.execute('alter database db cachelast 1')
             tdSql.query('show databases')
             tdSql.checkData(0,15,1)
-        
+
             #run last_row(*) query 500 times 
             tdSql.execute('use db')
             lastRow_On_start = datetime.now()
             for i in range(500):
                 tdSql.execute(f'SELECT LAST_ROW(*) FROM {tableName[i]}')
             lastRow_On_end = datetime.now()
-                
+
             tdLog.debug(f'time used:{lastRow_On_end-lastRow_On_start}')
 
             #check which one used more time
-            if (lastRow_Off_end-lastRow_Off_start > lastRow_On_end-lastRow_On_start):
-                pass
-            else:
+            if (
+                lastRow_Off_end - lastRow_Off_start
+                <= lastRow_On_end - lastRow_On_start
+            ):
                 slow += 1
             tdLog.debug(slow)
         if slow > 1: #tolerance for the first time
             tdLog.exit('lastRow hot alter failed')
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 
 tdCases.addWindows(__file__, TDTestCase())

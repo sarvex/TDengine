@@ -22,7 +22,7 @@ class ClusterTestcase:
     ## test case 1, 33 ##
     def run(self):
         
-        nodes = Nodes()        
+        nodes = Nodes()
         ctest = ClusterTest(nodes.node1.hostName)
 
         ctest.connectDB()
@@ -32,16 +32,16 @@ class ClusterTestcase:
         tdLog.info("Test case 1 repeat %d times" % ctest.repeat)
         for i in range(ctest.repeat):
             tdLog.info("Start Round %d" % (i + 1))
-            replica = random.randint(1,3)        
-            ctest.createSTable(replica) 
+            replica = random.randint(1,3)
+            ctest.createSTable(replica)
             ctest.run()
-            tdLog.sleep(10)      
-            tdSql.query("select count(*) from %s.%s" %(ctest.dbName, ctest.stbName))
-            tdSql.checkData(0, 0, ctest.numberOfRecords * ctest.numberOfTables)            
+            tdLog.sleep(10)
+            tdSql.query(f"select count(*) from {ctest.dbName}.{ctest.stbName}")
+            tdSql.checkData(0, 0, ctest.numberOfRecords * ctest.numberOfTables)
             tdLog.info("Round %d completed" % (i + 1))
 
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 ct = ClusterTestcase()
 ct.run()

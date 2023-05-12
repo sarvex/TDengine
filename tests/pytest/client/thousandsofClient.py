@@ -29,9 +29,10 @@ class TwoClients:
         self.config = "/home/chr/taosdata/TDengine/sim/dnode1/cfg "        
     
     def newCloseCon(times):
-        newConList = []
-        for times in range(0,times) :
-            newConList.append(taos.connect(self.host, self.user, self.password, self.config))
+        newConList = [
+            taos.connect(self.host, self.user, self.password, self.config)
+            for _ in range(0, times)
+        ]
         for times in range(0,times) :
             newConList[times].close()        
 
@@ -43,9 +44,9 @@ class TwoClients:
         tdDnodes.stopAll()
         tdDnodes.deploy(1)
         tdDnodes.start(1)
-        
+
         # multiple new and cloes connection
-        for m in range(1,101) :
+        for _ in range(1,101):
             t= threading.Thread(target=newCloseCon,args=(10,))
             t.start()
 

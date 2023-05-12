@@ -21,7 +21,7 @@ from util.dnodes import *
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor(), logSql)
         self.rowNum = 100000
         self.ts = 1537146000000
@@ -47,27 +47,29 @@ class TDTestCase:
         if (buildPath == ""):
             tdLog.exit("taosd not found!")
         else:
-            tdLog.info("taosd found in %s" % buildPath)
-        binPath = buildPath+ "/build/bin/"
+            tdLog.info(f"taosd found in {buildPath}")
+        binPath = f"{buildPath}/build/bin/"
 
         # insert data to cluster'db
-        os.system("%staosdemo -f cluster/TD-3693/insert1Data.json -y " % binPath)   
-        # multiple new and cloes connection with query data 
-        os.system("%staosdemo -f cluster/TD-3693/insert2Data.json -y " % binPath)   
-        os.system("nohup %staosdemoMul -f cluster/TD-3693/queryCount.json -y & " % binPath)
-        
+        os.system(f"{binPath}taosdemo -f cluster/TD-3693/insert1Data.json -y ")
+        # multiple new and cloes connection with query data
+        os.system(f"{binPath}taosdemo -f cluster/TD-3693/insert2Data.json -y ")
+        os.system(
+            f"nohup {binPath}taosdemoMul -f cluster/TD-3693/queryCount.json -y & "
+        )
+            
 
 
         # delete useless files 
         os.system("rm -rf ./insert_res.txt")
         os.system("rm -rf ./querySystemInfo*")
-        os.system("rm -rf cluster/TD-3693/multClient.py.sql")   
+        os.system("rm -rf cluster/TD-3693/multClient.py.sql")
         os.system("rm -rf ./querySystemInfo*")
 
 
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 
 tdCases.addWindows(__file__, TDTestCase())

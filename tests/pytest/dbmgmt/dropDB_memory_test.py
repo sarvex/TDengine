@@ -20,7 +20,7 @@ from util.sql import *
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor(), logSql)
 
     def run(self):
@@ -29,15 +29,15 @@ class TDTestCase:
         insertRows = 1
         db = "db"
         loop = 2
-        tdSql.execute("drop database if exists %s" % (db))
+        tdSql.execute(f"drop database if exists {db}")
         tdSql.execute("reset query cache")
         tdLog.sleep(1)
         for k in range(1, loop + 1):
             tdLog.info("===========Loop%d starts============" % (k))
             tdSql.execute(
-                "create database %s cache 163840 ablocks 40 maxtables 5000 wal 0" %
-                (db))
-            tdSql.execute("use %s" % (db))
+                f"create database {db} cache 163840 ablocks 40 maxtables 5000 wal 0"
+            )
+            tdSql.execute(f"use {db}")
             tdSql.execute(
                 "create table stb (ts timestamp, c1 int) tags(t1 bigint, t2 double)")
             for j in range(1, tbNum):
@@ -54,13 +54,13 @@ class TDTestCase:
                 tdSql.checkRows(insertRows)
                 tdLog.info("insert %d rows into tb%d" % (insertRows, j))
             # tdSql.sleep(3)
-            tdSql.execute("drop database %s" % (db))
+            tdSql.execute(f"drop database {db}")
             tdLog.sleep(2)
             tdLog.info("===========Loop%d completed!=============" % (k))
 
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 
 #tdCases.addWindows(__file__, TDTestCase())

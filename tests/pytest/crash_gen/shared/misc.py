@@ -23,14 +23,7 @@ class CrashGenError(taos.error.ProgrammingError):
 
 class LoggingFilter(logging.Filter):
     def filter(self, record: logging.LogRecord):
-        if (record.levelno >= logging.INFO):
-            return True  # info or above always log
-
-        # Commenting out below to adjust...
-
-        # if msg.startswith("[TRD]"):
-        #     return False
-        return True
+        return True  # info or above always log
 
 
 class MyLoggingAdapter(logging.LoggerAdapter):
@@ -92,7 +85,7 @@ class Status:
         self.set(status)
 
     def __repr__(self):
-        return "[Status: v={}]".format(self._status)
+        return f"[Status: v={self._status}]"
 
     def set(self, status: int):
         self._status = status
@@ -168,7 +161,7 @@ class Helper:
     def getFriendlyPath(cls, path): # returns .../xxx/yyy
         ht1 = os.path.split(path)
         ht2 = os.path.split(ht1[0])
-        return ".../" + ht2[1] + '/' + ht1[1]
+        return f".../{ht2[1]}/{ht1[1]}"
 
 
 class Progress:
@@ -206,4 +199,4 @@ class Progress:
 
     @classmethod
     def emitStr(cls, str):
-        print('({})'.format(str), end="", flush=True)
+        print(f'({str})', end="", flush=True)

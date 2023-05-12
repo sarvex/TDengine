@@ -21,7 +21,7 @@ import numpy as np
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor())
 
         self.rowNum = 10
@@ -32,7 +32,7 @@ class TDTestCase:
     def run(self):
         tdSql.prepare()
 
-        intData = []        
+        intData = []
         floatData = []
 
         tdSql.execute('''create table test(ts timestamp, col1 tinyint, col2 smallint, col3 int, col4 bigint, col5 float, col6 double, 
@@ -94,30 +94,66 @@ class TDTestCase:
         tdSql.execute(sql)
         for j in range(2):
             if j % 2 == 0:
-                sql = "create table %s using %s tags(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL)" % \
-                        (self.subtb_prefix+str(j)+'_'+str(j),self.stb_prefix)
+                sql = f"create table {self.subtb_prefix + str(j) + '_' + str(j)} using {self.stb_prefix} tags(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL)"
             else:
-                sql = "create table %s using %s tags(%d,%d,%d,%d,%d,%d,%d,'%s','%s',%d,%d,%d,%d)" % \
-                        (self.subtb_prefix+str(j)+'_'+str(j),self.stb_prefix,j,j/2.0,j%41,j%51,j%53,j*1.0,j%2,'taos'+str(j),'涛思'+str(j), j%43, j%23 , j%17 , j%3167)
+                sql = (
+                    "create table %s using %s tags(%d,%d,%d,%d,%d,%d,%d,'%s','%s',%d,%d,%d,%d)"
+                    % (
+                        self.subtb_prefix + str(j) + '_' + str(j),
+                        self.stb_prefix,
+                        j,
+                        j / 2.0,
+                        j % 41,
+                        j % 51,
+                        j % 53,
+                        j * 1.0,
+                        j % 2,
+                        f'taos{str(j)}',
+                        f'涛思{str(j)}',
+                        j % 43,
+                        j % 23,
+                        j % 17,
+                        j % 3167,
+                    )
+                )
             tdSql.execute(sql)
             for i in range(10):
-                if i % 5 == 0 :
+                if i % 5 == 0:
                     ret = tdSql.execute(
                     "insert into %s values (%d , NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL)" %
                     (self.subtb_prefix+str(j)+'_'+str(j), self.ts+i))
                 else:
                     ret = tdSql.execute(
-                        "insert into %s values (%d , %d,%d,%d,%d,%d,%d,%d,'%s','%s',%d,%d,%d,%d)" %
-                        (self.subtb_prefix+str(j)+'_'+str(j), self.ts+i, i%100, i/2.0, i%41, i%51, i%53, i*1.0, i%2,'taos'+str(i),'涛思'+str(i), i%43, i%23 , i%17 , i%3167))
-        
+                        (
+                            "insert into %s values (%d , %d,%d,%d,%d,%d,%d,%d,'%s','%s',%d,%d,%d,%d)"
+                            % (
+                                self.subtb_prefix + str(j) + '_' + str(j),
+                                self.ts + i,
+                                i % 100,
+                                i / 2.0,
+                                i % 41,
+                                i % 51,
+                                i % 53,
+                                i * 1.0,
+                                i % 2,
+                                f'taos{str(i)}',
+                                f'涛思{str(i)}',
+                                i % 43,
+                                i % 23,
+                                i % 17,
+                                i % 3167,
+                            )
+                        )
+                    )
+
         for i in range(13):
-            tdSql.query('select stddev(c4) from s group by t%s' % str(i+1) )
+            tdSql.query(f'select stddev(c4) from s group by t{str(i + 1)}')
 
         #add for td-3223
         for i in range(13):
-            if i == 1 or i == 5 or i == 6 or i == 7 or i == 9 or i == 8 :continue
+            if i in [1, 5, 6, 7, 9, 8]:continue
             tdSql.query('select stddev(c%d),stddev(c%d) from s group by c%d' %( i+1 , i+1 , i+1  ) )
-        
+
         #add for TD-3318
         tdSql.execute('create table t1(ts timestamp, k int, b binary(12));')
         tdSql.execute("insert into t1 values(now, 1, 'abc');")
@@ -127,7 +163,7 @@ class TDTestCase:
             
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 tdCases.addWindows(__file__, TDTestCase())
 tdCases.addLinux(__file__, TDTestCase())

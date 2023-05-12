@@ -24,30 +24,30 @@ class ClusterTestcase:
         
         nodes = Nodes()
         ctest = ClusterTest(nodes.node1.hostName)
-        ctest.connectDB()        
+        ctest.connectDB()
         ctest.createSTable(3)
         ctest.run()
         tdSql.init(ctest.conn.cursor(), False)
-        
+
         nodes.node2.stopTaosd()
-        tdSql.execute("use %s" % ctest.dbName)        
+        tdSql.execute(f"use {ctest.dbName}")
         tdSql.query("show vgroups")
         vnodeID = tdSql.getData(0, 0)
         nodes.node2.removeDataForVnode(vnodeID)
         nodes.node2.startTaosd()
 
         # Wait for vnode file to recover
-        for i in range(10):
+        for _ in range(10):
             tdSql.query("select count(*) from t0")
-        
+
         tdLog.sleep(10)
 
-        for i in range(10):
+        for _ in range(10):
             tdSql.query("select count(*) from t0")
             tdSql.checkData(0, 0, 1000)
-        
+
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 ct = ClusterTestcase()
 ct.run()

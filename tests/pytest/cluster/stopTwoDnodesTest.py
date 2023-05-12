@@ -24,19 +24,19 @@ class ClusterTestcase:
         
         nodes = Nodes()
         ctest = ClusterTest(nodes.node1.hostName)
-        ctest.connectDB()        
+        ctest.connectDB()
         ctest.createSTable(1)
         ctest.run()
         tdSql.init(ctest.conn.cursor(), False)
-        
+
         tdSql.query("show databases")
         count = tdSql.queryRows;
-        tdSql.execute("use %s" % ctest.dbName)
-        tdSql.execute("alter database %s replica 3" % ctest.dbName)    
+        tdSql.execute(f"use {ctest.dbName}")
+        tdSql.execute(f"alter database {ctest.dbName} replica 3")
         nodes.node2.stopTaosd()
         nodes.node3.stopTaosd()
         tdSql.error("show databases")
-        
+
         nodes.node2.startTaosd()
         tdSql.error("show databases")
 

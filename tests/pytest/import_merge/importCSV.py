@@ -23,7 +23,7 @@ from util.dnodes import *
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor(), logSql)
         self.csvfile = "/tmp/file.csv"
         self.rows = 10000
@@ -31,29 +31,25 @@ class TDTestCase:
         self.startTime = 1520000010000
     def genRandomStr(self, maxLen):
         H = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-        salt = ''
         if maxLen <= 1:
             maxLen = 2
         l = random.randint(1,maxLen)
-        for i in range(l):
-            salt += random.choice(H)
-        return salt
+        return ''.join(random.choice(H) for _ in range(l))
     def createCSVFile(self):
-        f = open(self.csvfile,'w',encoding='utf-8') 
-        csv_writer = csv.writer(f, quoting=csv.QUOTE_NONNUMERIC) 
-        for i in range(self.rows):   
-            csv_writer.writerow([self.startTime + i, 
-                                self.genRandomStr(5),
-                                self.genRandomStr(6),
-                                self.genRandomStr(7),
-                                self.genRandomStr(8),
-                                self.genRandomStr(9),
-                                self.genRandomStr(10),
-                                self.genRandomStr(11),
-                                self.genRandomStr(12),
-                                self.genRandomStr(13),
-                                self.genRandomStr(14)])
-        f.close()
+        with open(self.csvfile,'w',encoding='utf-8') as f:
+            csv_writer = csv.writer(f, quoting=csv.QUOTE_NONNUMERIC)
+            for i in range(self.rows):   
+                csv_writer.writerow([self.startTime + i, 
+                                    self.genRandomStr(5),
+                                    self.genRandomStr(6),
+                                    self.genRandomStr(7),
+                                    self.genRandomStr(8),
+                                    self.genRandomStr(9),
+                                    self.genRandomStr(10),
+                                    self.genRandomStr(11),
+                                    self.genRandomStr(12),
+                                    self.genRandomStr(13),
+                                    self.genRandomStr(14)])
     def destroyCSVFile(self):
         os.remove(self.csvfile) 
     def run(self):
@@ -88,7 +84,7 @@ class TDTestCase:
     def stop(self):
         self.destroyCSVFile()
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
         tdDnodes.stop(1)
 
 

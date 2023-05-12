@@ -27,7 +27,7 @@ if __name__ == '__main__':
         conn = taos.connect(host=hostname, user="root", password="taosdata", config="/etc/taos")
     else:
         conn = taos.connect(host="127.0.0.1", user="root", password="taosdata", config="/etc/taos")
-   
+
     # Generate a cursor object to run SQL commands
     c1 = conn.cursor()
     # Create a database named db
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     except Exception as err:
         conn.close()
         raise(err)
-        
+
     # use database
     try:
         c1.execute('use db')
@@ -52,8 +52,8 @@ if __name__ == '__main__':
         conn.close()
         raise(err)
 
-    # insert data 
-    for i in range(10):
+    # insert data
+    for _ in range(10):
         try:
            value = c1.execute("insert into t values ('%s', %d, %f, '%s')" % (start_time, random.randint(1,10), random.randint(1,10)/10.0, 'hello'))
            #if insert, value is the affected rows

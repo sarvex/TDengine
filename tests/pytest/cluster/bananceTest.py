@@ -23,35 +23,32 @@ class ClusterTestcase:
     ## test case 32 ##
     def run(self):
         
-        nodes = Nodes()        
+        nodes = Nodes()
         nodes.addConfigs("maxVgroupsPerDb", "10")
         nodes.addConfigs("maxTablesPerVnode", "1000")
         nodes.restartAllTaosd()
 
         ctest = ClusterTest(nodes.node1.hostName)
-        ctest.connectDB()                
+        ctest.connectDB()
         ctest.createSTable(1)
         ctest.run()
         tdSql.init(ctest.conn.cursor(), False)
-        
-        tdSql.execute("use %s" % ctest.dbName) 
+
+        tdSql.execute(f"use {ctest.dbName}")
         tdSql.query("show vgroups")
-        dnodes = []
-        for i in range(10):
-            dnodes.append(int(tdSql.getData(i, 4)))
-        
+        dnodes = [int(tdSql.getData(i, 4)) for i in range(10)]
         s = set(dnodes)
         if len(s) < 3:
             tdLog.exit("cluster is not balanced")
-        
+
         tdLog.info("cluster is balanced")
 
         nodes.removeConfigs("maxVgroupsPerDb", "10")
         nodes.removeConfigs("maxTablesPerVnode", "1000")
         nodes.restartAllTaosd()
-                                
+
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 ct = ClusterTestcase()
 ct.run()

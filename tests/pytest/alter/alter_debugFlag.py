@@ -21,22 +21,22 @@ from util.dnodes import tdDnodes
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor(), logSql)
 
     def run(self):
         tdSql.prepare()
-        
+
         flagList=["debugflag", "cdebugflag", "tmrDebugFlag", "uDebugFlag", "rpcDebugFlag"]
 
         for flag in flagList:
-            tdSql.execute("alter local %s 131" % flag)
-            tdSql.execute("alter local %s 135" % flag)
-            tdSql.execute("alter local %s 143" % flag)
+            tdSql.execute(f"alter local {flag} 131")
+            tdSql.execute(f"alter local {flag} 135")
+            tdSql.execute(f"alter local {flag} 143")
             randomFlag = random.randint(100, 250)
-            if randomFlag != 131 and randomFlag != 135 and randomFlag != 143:
+            if randomFlag not in [131, 135, 143]:
                 tdSql.error("alter local %s %d" % (flag, randomFlag))
-        
+
         tdSql.query("show dnodes")
         dnodeId = tdSql.getData(0, 0)
 
@@ -47,7 +47,7 @@ class TDTestCase:
 
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 
 tdCases.addWindows(__file__, TDTestCase()) 

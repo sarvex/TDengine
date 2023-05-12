@@ -12,10 +12,7 @@ class DBAPITypeObject(object):
     def __com__(self, other):
         if other in self.values:
             return 0
-        if other < self.values:
-            return 1
-        else:
-            return -1
+        return 1 if other < self.values else -1
 
 
 Date = datetime.date

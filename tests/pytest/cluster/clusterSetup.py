@@ -18,13 +18,15 @@ import logging
 
 class Node:
     def __init__(self, index, username, hostIP, hostName, password, homeDir):
-        self.index = index        
+        self.index = index
         self.username = username
         self.hostIP = hostIP
         self.hostName = hostName
         self.homeDir = homeDir
         self.corePath = '/coredump'
-        self.conn = Connection("{}@{}".format(username, hostName), connect_kwargs={"password": "{}".format(password)})        
+        self.conn = Connection(
+            f"{username}@{hostName}", connect_kwargs={"password": f"{password}"}
+        )        
     
     def buildTaosd(self):
         try:
@@ -41,7 +43,6 @@ class Node:
         except Exception as e:
             print("Build Taosd error for node %d " % self.index)
             logging.exception(e)
-            pass
 
     def startTaosd(self):
         try:
@@ -87,18 +88,22 @@ class Node:
     def installTaosd(self, packagePath):
         self.conn.put(packagePath, self.homeDir)
         self.conn.cd(self.homeDir)
-        self.conn.run("tar -zxf $(basename '%s')" % packagePath)
+        self.conn.run(f"tar -zxf $(basename '{packagePath}')")
         with self.conn.cd("TDengine-enterprise-server"):
             self.conn.run("yes|./install.sh")
 
     def configTaosd(self, taosConfigKey, taosConfigValue):
-        self.conn.run("sudo echo '%s %s' >> %s" % (taosConfigKey, taosConfigValue, "/etc/taos/taos.cfg"))
+        self.conn.run(
+            f"sudo echo '{taosConfigKey} {taosConfigValue}' >> /etc/taos/taos.cfg"
+        )
 
     def removeTaosConfig(self, taosConfigKey, taosConfigValue): 
-        self.conn.run("sudo sed -in-place -e '/%s %s/d' %s" % (taosConfigKey, taosConfigValue, "/etc/taos/taos.cfg"))
+        self.conn.run(
+            f"sudo sed -in-place -e '/{taosConfigKey} {taosConfigValue}/d' /etc/taos/taos.cfg"
+        )
     
     def configHosts(self, ip, name):
-        self.conn.run("echo '%s %s' >> %s" % (ip, name, '/etc/hosts'))
+        self.conn.run(f"echo '{ip} {name}' >> /etc/hosts")
 
     def removeData(self):
         try:
@@ -133,7 +138,7 @@ class Node:
         try:
             result = self.conn.run("find /coredump -name 'core_*' ", hide=True)
             output = result.stdout
-            print("output: %s" % output)
+            print(f"output: {output}")
             return output
         except Exception as e:
             print("find coredump file error on node %d " % self.index)
@@ -142,8 +147,7 @@ class Node:
 
 class Nodes:
     def __init__(self):
-        self.tdnodes = []
-        self.tdnodes.append(Node(0, 'root', '192.168.17.194', 'taosdata', 'r', '/root/'))
+        self.tdnodes = [Node(0, 'root', '192.168.17.194', 'taosdata', 'r', '/root/')]
         # self.tdnodes.append(Node(1, 'root', '52.250.48.222', 'node2', 'a', '/root/'))
         # self.tdnodes.append(Node(2, 'root', '51.141.167.23', 'node3', 'a', '/root/'))
         # self.tdnodes.append(Node(3, 'root', '52.247.207.173', 'node4', 'a', '/root/'))
@@ -204,9 +208,9 @@ class Test:
         while True:
             for i in range(len(self.nodes.tdnodes)):
                 result = self.nodes.detectCoredumpFile(i)
-                print("core file path is %s" % result)
+                print(f"core file path is {result}")
                 if result and not result.isspace():
-                    self.nodes.stopAllTaosd()                    
+                    self.nodes.stopAllTaosd()
             print("sleep for 10 mins")
             time.sleep(600)
 

@@ -24,22 +24,22 @@ class ClusterTestcase:
         
         nodes = Nodes()
         ctest = ClusterTest(nodes.node1.hostName)
-        ctest.connectDB()        
+        ctest.connectDB()
         tdSql.init(ctest.conn.cursor(), False)
 
-        tdSql.execute("use %s" % ctest.dbName)
+        tdSql.execute(f"use {ctest.dbName}")
         tdSql.query("show vgroups")
         for i in range(10):
             tdSql.checkData(i, 5, "master")
 
-        tdSql.execute("alter database %s replica 2" % ctest.dbName)    
+        tdSql.execute(f"alter database {ctest.dbName} replica 2")
         tdLog.sleep(30)
         tdSql.query("show vgroups")
         for i in range(10):
             tdSql.checkData(i, 5, "master")
             tdSql.checkData(i, 7, "slave")
-            
-        tdSql.execute("alter database %s replica 3" % ctest.dbName)
+
+        tdSql.execute(f"alter database {ctest.dbName} replica 3")
         tdLog.sleep(30)
         tdSql.query("show vgroups")
         for i in range(10):

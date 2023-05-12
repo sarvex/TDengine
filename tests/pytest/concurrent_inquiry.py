@@ -71,23 +71,20 @@ class ConcurrentInquiry:
 
     def ret_fcol(self,cl,sql):                     #返回结果的第一列
         cl.execute(sql)
-        fcol_list=[]
-        for data in cl:
-            fcol_list.append(data[0])
-        return fcol_list
+        return [data[0] for data in cl]
 
     def r_stb_list(self,cl):                    #返回超级表列表
-        sql='show '+self.dbname+'.stables'
+        sql = f'show {self.dbname}.stables'
         self.stb_list=self.ret_fcol(cl,sql)
 
     def r_subtb_list(self,cl,stablename):       #每个超级表返回2个子表
-        sql='select tbname from '+self.dbname+'.'+stablename+' limit 2;'
+        sql = f'select tbname from {self.dbname}.{stablename} limit 2;'
         self.subtb_list+=self.ret_fcol(cl,sql)
 
     def cal_struct(self,cl,tbname):             #查看表结构
         tb=[]
         tag=[]
-        sql='describe '+self.dbname+'.'+tbname+';'
+        sql = f'describe {self.dbname}.{tbname};'
         cl.execute(sql)
         for data in cl:
             if data[3]:
@@ -109,7 +106,7 @@ class ConcurrentInquiry:
             self.subtb_tag_list.append(tag)
 
     def get_timespan(self,cl):                  #获取时间跨度(仅第一个超级表)
-        sql = 'select first(_c0),last(_c0) from ' + self.dbname + '.' + self.stb_list[0] + ';'
+        sql = f'select first(_c0),last(_c0) from {self.dbname}.{self.stb_list[0]};'
         print(sql)
         cl.execute(sql)
         for data in cl:
@@ -138,7 +135,7 @@ class ConcurrentInquiry:
     #query condition
     def con_where(self,tlist,col_list,tag_list):                               
         l=[]
-        for i in range(random.randint(0,len(tlist))):
+        for _ in range(random.randint(0,len(tlist))):
             c = random.choice(where_list)
             if c == '_c0>now-10d':
                 rdate = self.min_ts + (self.max_ts - self.min_ts)/10 * random.randint(-11,11)
@@ -147,27 +144,48 @@ class ConcurrentInquiry:
                     l.append(conlist)
                 else: l.append(c)
             elif '<50' in c:
-                conlist = ' ' + random.choice(tlist) + random.choice(['<','>','>=','<=','<>']) + str(random.randrange(-100,100))
-                l.append(conlist) 
+                conlist = (
+                    f' {random.choice(tlist)}'
+                    + random.choice(['<', '>', '>=', '<=', '<>'])
+                    + str(random.randrange(-100, 100))
+                )
+                l.append(conlist)
             elif 'is null' in c:
-                conlist = ' ' + random.choice(tlist) + random.choice([' is null',' is not null'])
-                l.append(conlist) 
+                conlist = f' {random.choice(tlist)}' + random.choice(
+                    [' is null', ' is not null']
+                )
+                l.append(conlist)
             else:
                 s_all = string.ascii_letters
-                conlist = ' ' + random.choice(tlist) + " like \'%" + random.choice(s_all) + "%\' " 
+                conlist = (
+                    f' {random.choice(tlist)}'
+                    + " like \'%"
+                    + random.choice(s_all)
+                    + "%\' "
+                )
                 l.append(conlist)
         return 'where '+random.choice([' and ',' or ']).join(l)
 
     def con_interval(self,tlist,col_list,tag_list): 
-        interval = 'interval(' + str(random.randint(0,20)) + random.choice(['a','s','d','w','n','y'])  + ')'          
-        return interval
+        return (
+            f'interval({random.randint(0, 20)}'
+            + random.choice(['a', 's', 'd', 'w', 'n', 'y'])
+            + ')'
+        )
 
     def con_limit(self,tlist,col_list,tag_list):
         rand1 = str(random.randint(0,1000))
         rand2 = str(random.randint(0,1000))
-        return random.choice(['limit ' + rand1,'limit ' + rand1 + ' offset '+rand2,
-        ' slimit ' + rand1,' slimit ' + rand1 + ' offset ' + rand2,'limit '+rand1 + ' slimit '+ rand2,
-        'limit '+ rand1 + ' offset' + rand2 + ' slimit '+ rand1 + ' soffset ' + rand2 ])
+        return random.choice(
+            [
+                f'limit {rand1}',
+                f'limit {rand1} offset {rand2}',
+                f' slimit {rand1}',
+                f' slimit {rand1} offset {rand2}',
+                f'limit {rand1} slimit {rand2}',
+                f'limit {rand1} offset{rand2} slimit {rand1} soffset {rand2}',
+            ]
+        )
     
     def con_fill(self,tlist,col_list,tag_list):
         return random.choice(['fill(null)','fill(prev)','fill(none)','fill(LINEAR)'])
@@ -178,7 +196,7 @@ class ConcurrentInquiry:
         return 'group by '+','.join(random.sample(col_list,rand_col) + random.sample(tag_list,rand_tag))
     
     def con_order(self,tlist,col_list,tag_list):
-        return 'order by '+random.choice(tlist)
+        return f'order by {random.choice(tlist)}'
     
     def gen_query_sql(self):                        #生成查询语句
         tbi=random.randint(0,len(self.subtb_list)+len(self.stb_list))  #随机决定查询哪张表
@@ -186,8 +204,8 @@ class ConcurrentInquiry:
         col_list=[]
         tag_list=[]
         is_stb=0
-        if tbi>len(self.stb_list) :
-            tbi=tbi-len(self.stb_list)
+        if tbi>len(self.stb_list):
+            tbi -= len(self.stb_list)
             tbname=self.subtb_list[tbi-1]
             col_list=self.subtb_stru_list[tbi-1]
             tag_list=self.subtb_tag_list[tbi-1]
@@ -202,40 +220,32 @@ class ConcurrentInquiry:
         col_rand=random.randint(0,len(col_list))
         tag_rand=random.randint(0,len(tag_list))
         t_rand=random.randint(0,len(tlist))
-        sql='select '                                           #select 
         random.shuffle(col_list)
         random.shuffle(func_list)
         sel_col_list=[]
         col_rand=random.randint(0,len(col_list))
-        loop = 0
-        for i,j in zip(col_list[0:col_rand],func_list):         #决定每个被查询col的函数
+        for loop, (i, j) in enumerate(zip(col_list[:col_rand], func_list)):     #决定每个被查询col的函数
             alias = ' as '+ 'taos%d ' % loop
-            loop += 1
             pick_func = ''
             if j == 'leastsquares':
-                pick_func=j+'('+i+',1,1)'
-            elif j == 'top' or j == 'bottom' or j == 'percentile' or j == 'apercentile':
-                pick_func=j+'('+i+',1)'
+                pick_func = f'{j}({i},1,1)'
+            elif j in ['top', 'bottom', 'percentile', 'apercentile']:
+                pick_func = f'{j}({i},1)'
             else:
-                pick_func=j+'('+i+')'
+                pick_func = f'{j}({i})'
             if bool(random.getrandbits(1)):
                 pick_func+=alias
             sel_col_list.append(pick_func)
-        if col_rand == 0:
-            sql = sql + '*'   
-        else: 
-            sql=sql+','.join(sel_col_list)         #select col & func
+        sql = 'select ' + ('*' if col_rand == 0 else ','.join(sel_col_list))
         if self.mix_table == 0:
-            sql = sql + ' from '+random.choice(self.stb_list+self.subtb_list)+' '         
+            sql = f'{sql} from {random.choice(self.stb_list + self.subtb_list)} '
         elif self.mix_table == 1:
-            sql = sql + ' from '+random.choice(self.subtb_list)+' '
+            sql = f'{sql} from {random.choice(self.subtb_list)} '
         else:
-            sql = sql + ' from '+random.choice(self.stb_list)+' ' 
+            sql = f'{sql} from {random.choice(self.stb_list)} '
         con_func=[self.con_where,self.con_interval,self.con_limit,self.con_group,self.con_order,self.con_fill]
         sel_con=random.sample(con_func,random.randint(0,len(con_func)))
-        sel_con_list=[]
-        for i in sel_con:
-            sel_con_list.append(i(tlist,col_list,tag_list))                                  #获取对应的条件函数
+        sel_con_list = [i(tlist,col_list,tag_list) for i in sel_con]
         sql+=' '.join(sel_con_list)                                       # condition
         #print(sql)
         return sql
@@ -247,63 +257,49 @@ class ConcurrentInquiry:
         col_intersection = []
         tag_intersection = []
         subtable = None
-        if self.mix_table == 0:
-            if bool(random.getrandbits(1)):
-                subtable = True
-                tbname = random.sample(self.subtb_list,2)
-                for i in tbname:
-                    col_list.append(self.subtb_stru_list[self.subtb_list.index(i)])
-                    tag_list.append(self.subtb_stru_list[self.subtb_list.index(i)])
-                col_intersection = list(set(col_list[0]).intersection(set(col_list[1])))
-                tag_intersection = list(set(tag_list[0]).intersection(set(tag_list[1])))
-            else:
-                tbname = random.sample(self.stb_list,2)
-                for i in tbname:
-                    col_list.append(self.stb_stru_list[self.stb_list.index(i)])
-                    tag_list.append(self.stb_stru_list[self.stb_list.index(i)])
-                col_intersection = list(set(col_list[0]).intersection(set(col_list[1])))
-                tag_intersection = list(set(tag_list[0]).intersection(set(tag_list[1])))
-        elif self.mix_table == 1:
+        if (
+            self.mix_table == 0
+            and bool(random.getrandbits(1))
+            or self.mix_table != 0
+            and self.mix_table == 1
+        ):
             subtable = True
             tbname = random.sample(self.subtb_list,2)
             for i in tbname:
                 col_list.append(self.subtb_stru_list[self.subtb_list.index(i)])
                 tag_list.append(self.subtb_stru_list[self.subtb_list.index(i)])
-            col_intersection = list(set(col_list[0]).intersection(set(col_list[1])))
-            tag_intersection = list(set(tag_list[0]).intersection(set(tag_list[1])))
         else:
             tbname = random.sample(self.stb_list,2)
             for i in tbname:
                 col_list.append(self.stb_stru_list[self.stb_list.index(i)])
                 tag_list.append(self.stb_stru_list[self.stb_list.index(i)])
-            col_intersection = list(set(col_list[0]).intersection(set(col_list[1])))
-            tag_intersection = list(set(tag_list[0]).intersection(set(tag_list[1])))
+        col_intersection = list(set(col_list[0]).intersection(set(col_list[1])))
+        tag_intersection = list(set(tag_list[0]).intersection(set(tag_list[1])))
         con_rand=random.randint(0,len(condition_list))
         col_rand=random.randint(0,len(col_list))
         tag_rand=random.randint(0,len(tag_list))
         sql='select '                                           #select 
-        
-        sel_col_tag=[]
+
         col_rand=random.randint(0,len(col_list))
         if bool(random.getrandbits(1)):
             sql += '*'
         else:
-            sel_col_tag.append('t1.' + str(random.choice(col_list[0] + tag_list[0])))
-            sel_col_tag.append('t2.' + str(random.choice(col_list[1] + tag_list[1])))
-            sel_col_list = []
+            sel_col_tag = [
+                f't1.{str(random.choice(col_list[0] + tag_list[0]))}',
+                f't2.{str(random.choice(col_list[1] + tag_list[1]))}',
+            ]
             random.shuffle(func_list)
             if self.random_pick():
-                loop = 0
-                for i,j in zip(sel_col_tag,func_list):         #决定每个被查询col的函数
+                sel_col_list = []
+                for loop, (i, j) in enumerate(zip(sel_col_tag,func_list)):         #决定每个被查询col的函数
                     alias = ' as '+ 'taos%d ' % loop
-                    loop += 1
                     pick_func = ''
                     if j == 'leastsquares':
-                        pick_func=j+'('+i+',1,1)'
-                    elif j == 'top' or j == 'bottom' or j == 'percentile' or j == 'apercentile':
-                        pick_func=j+'('+i+',1)'
+                        pick_func = f'{j}({i},1,1)'
+                    elif j in ['top', 'bottom', 'percentile', 'apercentile']:
+                        pick_func = f'{j}({i},1)'
                     else:
-                        pick_func=j+'('+i+')'
+                        pick_func = f'{j}({i})'
                     if bool(random.getrandbits(1)):
                         pick_func+=alias
                     sel_col_list.append(pick_func)
@@ -311,17 +307,15 @@ class ConcurrentInquiry:
             else:
                 sql += ','.join(sel_col_tag)
 
-        sql = sql + ' from '+ str(tbname[0]) +' t1,' + str(tbname[1]) + ' t2 '                        #select col & func
+        sql = f'{sql} from {str(tbname[0])} t1,{str(tbname[1])} t2 '
         join_section = None
         temp = None
         if subtable:
             temp = random.choices(col_intersection)
-            join_section = temp.pop()
-            sql += 'where t1._c0 = t2._c0 and ' + 't1.' + str(join_section) + '=t2.' + str(join_section)
         else:
             temp = random.choices(col_intersection+tag_intersection)
-            join_section = temp.pop()
-            sql += 'where t1._c0 = t2._c0 and ' + 't1.' + str(join_section) + '=t2.' + str(join_section)
+        join_section = temp.pop()
+        sql += 'where t1._c0 = t2._c0 and ' + 't1.' + str(join_section) + '=t2.' + str(join_section)
         return sql
 
     def random_pick(self): 

@@ -49,13 +49,13 @@ INFLUX_BUCKET="Bucket01"
 def writeTaosBatch(dbc, tblName):
     # Database.setupLastTick()
     global value, tick
-    
+
     data = []
-    for i in range(0, 100):
-        data.append("('{}', {})".format(Database.getNextTick(), value) )
+    for _ in range(0, 100):
+        data.append(f"('{Database.getNextTick()}', {value})")
         value += 1
 
-    sql = "INSERT INTO {} VALUES {}".format(tblName, ''.join(data))
+    sql = f"INSERT INTO {tblName} VALUES {''.join(data)}"
     dbc.execute(sql)
 
 class PerfGenError(taos.error.ProgrammingError):
@@ -81,8 +81,10 @@ class Benchmark():
         if loopCount == 0: # use config
             self._loopCount = cfgLoopCount
         else:
-            if cfgLoopCount :
-                Logging.warning("Ignoring loop count for fixed-loop-count benchmarks: {}".format(cfgLoopCount))
+            if cfgLoopCount:
+                Logging.warning(
+                    f"Ignoring loop count for fixed-loop-count benchmarks: {cfgLoopCount}"
+                )
             self._loopCount = loopCount
 
     @abstractmethod
@@ -112,7 +114,7 @@ class Benchmark():
         return self.__class__.__name__
 
     def run(self):
-        print("Running benchmark: {}, class={} ...".format(self.name, self.__class__))    
+        print(f"Running benchmark: {self.name}, class={self.__class__} ...")
         startTime = time.time()
 
         # Prepare to execute the benchmark
@@ -139,12 +141,8 @@ class Benchmark():
         self._subProcs = []
         for j in range(0, Config.getConfig().subprocess_count):
             ON_POSIX = 'posix' in sys.builtin_module_names
-            tblName = 'cars_reg_{}'.format(j)
-            cmdLineStr = './perf_gen.sh -t {} -i -n {} -l {}'.format(
-                    self._dbType, 
-                    tblName,
-                    Config.getConfig().loop_count
-                    )
+            tblName = f'cars_reg_{j}'
+            cmdLineStr = f'./perf_gen.sh -t {self._dbType} -i -n {tblName} -l {Config.getConfig().loop_count}'
             if Config.getConfig().debug:
                 cmdLineStr += ' -d'
             subProc = subprocess.Popen(cmdLineStr,
@@ -165,25 +163,25 @@ class TaosBenchmark(Benchmark):
         tInst = TdeInstance()
         self._dbc = DbConn.createNative(tInst.getDbTarget())
         self._dbc.open()
-        self._sTable = TdSuperTable(TIME_SERIES_NAME + '_s', DB_NAME)    
+        self._sTable = TdSuperTable(f'{TIME_SERIES_NAME}_s', DB_NAME)    
 
     def doIterate(self):    
         tblName = Config.getConfig().target_table_name
-        print("Benchmarking TAOS database (1 pass) for: {}".format(tblName))
-        self._dbc.execute("USE {}".format(DB_NAME))
+        print(f"Benchmarking TAOS database (1 pass) for: {tblName}")
+        self._dbc.execute(f"USE {DB_NAME}")
 
         self._sTable.ensureRegTable(None, self._dbc, tblName)
         try:
             lCount = Config.getConfig().loop_count
-            print("({})".format(lCount))
-            for i in range(0, lCount):            
-                writeTaosBatch(self._dbc, tblName)    
+            print(f"({lCount})")
+            for _ in range(0, lCount):
+                writeTaosBatch(self._dbc, tblName)
         except taos.error.ProgrammingError as err:
             Logging.error("Failed to write batch")
 
     def prepare(self):        
-        self._dbc.execute("CREATE DATABASE IF NOT EXISTS {}".format(DB_NAME))
-        self._dbc.execute("USE {}".format(DB_NAME))
+        self._dbc.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
+        self._dbc.execute(f"USE {DB_NAME}")
         # Create the super table
         self._sTable.drop(self._dbc, True)
         self._sTable.create(self._dbc,
@@ -210,7 +208,7 @@ class TaosBenchmark(Benchmark):
         sqlPrefix  = "INSERT INTO "
         dataTemplate = "{} USING {} TAGS({},{},'barcode_{}') VALUES('{}',{},{},'{}') "
 
-        stName = self._sTable.getName()            
+        stName = self._sTable.getName()
         BATCH_SIZE = 2000 # number of items per request batch
         ITEMS_PER_SHELF = 5
 
@@ -231,14 +229,14 @@ class TaosBenchmark(Benchmark):
                 rack  = n // (ITEMS_PER_SHELF * MAX_SHELF) # rack number
                 barcode = rack + shelf
                 # table name
-                tableName = "reg_" + str(rack) + '_' + str(shelf)
+                tableName = f"reg_{str(rack)}_{str(shelf)}"
                 # now the SQL
                 sql += dataTemplate.format(tableName, stName,# table name
                     rack, shelf, barcode,  # tags
                     Database.getNextTick(), temperature, pressure, 'xxx') # values
                 lastRack = rack
             self.execSql(sql)
-        Logging.info("Last Rack: {}".format(lastRack))
+        Logging.info(f"Last Rack: {lastRack}")
 
 class TaosWriteBenchmark(TaosBenchmark):
     def execute(self):
@@ -338,7 +336,7 @@ class InfluxBenchmark(Benchmark):
         for org in orgs:
             if org.name == orgName:
                 return org.id
-        raise PerfGenError("Org not found with name: {}".format(orgName))
+        raise PerfGenError(f"Org not found with name: {orgName}")
 
     def _fetchAuth(self):        
         authApi = self._client.authorizations_api()
@@ -364,9 +362,7 @@ class InfluxBenchmark(Benchmark):
         self._verifyPermissions(auth.permissions)
 
         bktApi = self._client.buckets_api()
-        # Delete
-        bkt = bktApi.find_bucket_by_name(INFLUX_BUCKET)
-        if bkt:
+        if bkt := bktApi.find_bucket_by_name(INFLUX_BUCKET):
             bktApi.delete_bucket(bkt)
         # Recreate
 
@@ -465,16 +461,15 @@ def main():
     Config.init(parser)
     Logging.clsInit(Config.getConfig().debug)
     Dice.seed(0)  # initial seeding of dice
-    
+
     bName = Config.getConfig().benchmark_name
-    bClassName = bName + 'Benchmark'
+    bClassName = f'{bName}Benchmark'
     x = globals()
-    if bClassName in globals():
-        bClass = globals()[bClassName]
-        bm = bClass() # Benchmark object
-        bm.run()
-    else:
-        raise PerfGenError("No such benchmark: {}".format(bName))
+    if bClassName not in globals():
+        raise PerfGenError(f"No such benchmark: {bName}")
+    bClass = globals()[bClassName]
+    bm = bClass() # Benchmark object
+    bm.run()
 
     # bm = Benchmark.create(Config.getConfig().target_database)
     # bm.run()

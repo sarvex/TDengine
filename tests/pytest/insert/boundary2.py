@@ -21,15 +21,14 @@ from util.dnodes import tdDnodes
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor(), logSql)
 
         self.ts = 1538548685000
 
     def get_random_string(self, length):
         letters = string.ascii_lowercase
-        result_str = ''.join(random.choice(letters) for i in range(length))
-        return result_str
+        return ''.join(random.choice(letters) for _ in range(length))
 
     def run(self):
         tdSql.prepare()
@@ -39,15 +38,15 @@ class TDTestCase:
         sql = "create table stb(ts timestamp, "
         for i in range(1022):
             sql += "col%d binary(14), " % (i + 1)
-        sql += "col1023 binary(22))"        
+        sql += "col1023 binary(22))"
         tdSql.execute(sql)
 
         for i in range(4096):
             sql = "insert into stb values(%d, "
-            for j in range(1022):
-                str = "'%s', " % self.get_random_string(14)                
+            str = f"'{self.get_random_string(14)}', "
+            for _ in range(1022):
                 sql += str
-            sql += "'%s')" % self.get_random_string(22)
+            sql += f"'{self.get_random_string(22)}')"
             tdSql.execute(sql % (self.ts + i))
 
         time.sleep(10)
@@ -67,7 +66,7 @@ class TDTestCase:
 
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 
 tdCases.addWindows(__file__, TDTestCase())

@@ -25,7 +25,7 @@ import pandas as pd
 
 class TDTestCase:
     def init(self, conn, logSql):
-        tdLog.debug("start to execute %s" % __file__)
+        tdLog.debug(f"start to execute {__file__}")
         tdSql.init(conn.cursor(), logSql)
 
         self.ts = 1500074556514                  
@@ -33,11 +33,19 @@ class TDTestCase:
     def writeCSV(self):
         with open('test3.csv','w', encoding='utf-8', newline='') as csvFile:
             writer = csv.writer(csvFile, dialect='excel')
-            for i in range(1000000):
+            for _ in range(1000000):
                 newTimestamp = self.ts + random.randint(10000000, 10000000000) + random.randint(1000, 10000000) + random.randint(1, 1000)
                 d = datetime.datetime.fromtimestamp(newTimestamp / 1000)
                 dt = str(d.strftime("%Y-%m-%d %H:%M:%S.%f"))
-                writer.writerow(["'%s'" % dt, random.randint(1, 100), random.uniform(1, 100), random.randint(1, 100), random.randint(1, 100)])
+                writer.writerow(
+                    [
+                        f"'{dt}'",
+                        random.randint(1, 100),
+                        random.uniform(1, 100),
+                        random.randint(1, 100),
+                        random.randint(1, 100),
+                    ]
+                )
     
     def removCSVHeader(self):
         data = pd.read_csv("ordered.csv")
@@ -65,7 +73,7 @@ class TDTestCase:
 
     def stop(self):
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
 
 tdCases.addWindows(__file__, TDTestCase())
 tdCases.addLinux(__file__, TDTestCase())

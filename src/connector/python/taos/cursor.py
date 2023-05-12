@@ -119,9 +119,6 @@ class TDengineCursor(object):
         self._reset_result()
 
         stmt = operation
-        if params is not None:
-            pass
-
         # global querySeqNum
         # querySeqNum += 1
         # localSeqNum = querySeqNum # avoid raice condition
@@ -133,19 +130,18 @@ class TDengineCursor(object):
                 logfile.write("%s;\n" % operation)
 
         errno = CTaosInterface.libtaos.taos_errno(self._result)
-        if errno == 0:
-            if CTaosInterface.fieldsCount(self._result) == 0:
-                self._affected_rows += CTaosInterface.affectedRows(
-                    self._result)
-                return CTaosInterface.affectedRows(self._result)
-            else:
-                self._fields = CTaosInterface.useResult(
-                    self._result)
-                return self._handle_result()
-        else:
+        if errno != 0:
             raise ProgrammingError(
                 CTaosInterface.errStr(
                     self._result), errno)
+        if CTaosInterface.fieldsCount(self._result) == 0:
+            self._affected_rows += CTaosInterface.affectedRows(
+                self._result)
+            return CTaosInterface.affectedRows(self._result)
+        else:
+            self._fields = CTaosInterface.useResult(
+                self._result)
+            return self._handle_result()
 
     def executemany(self, operation, seq_of_parameters):
         """Prepare a database operation (query or command) and then execute it against all parameter sequences or mappings found in the sequence seq_of_parameters.
@@ -161,50 +157,61 @@ class TDengineCursor(object):
         pass
 
     def istype(self, col, dataType):
-        if (dataType.upper() == "BOOL"):
-            if (self._description[col][1] == FieldType.C_BOOL):
-                return True
-        if (dataType.upper() == "TINYINT"):
-            if (self._description[col][1] == FieldType.C_TINYINT):
-                return True
-        if (dataType.upper() == "TINYINT UNSIGNED"):
-            if (self._description[col][1] == FieldType.C_TINYINT_UNSIGNED):
-                return True
-        if (dataType.upper() == "SMALLINT"):
-            if (self._description[col][1] == FieldType.C_SMALLINT):
-                return True
-        if (dataType.upper() == "SMALLINT UNSIGNED"):
-            if (self._description[col][1] == FieldType.C_SMALLINT_UNSIGNED):
-                return True
-        if (dataType.upper() == "INT"):
-            if (self._description[col][1] == FieldType.C_INT):
-                return True
-        if (dataType.upper() == "INT UNSIGNED"):
-            if (self._description[col][1] == FieldType.C_INT_UNSIGNED):
-                return True
-        if (dataType.upper() == "BIGINT"):
-            if (self._description[col][1] == FieldType.C_BIGINT):
-                return True
-        if (dataType.upper() == "BIGINT UNSIGNED"):
-            if (self._description[col][1] == FieldType.C_BIGINT_UNSIGNED):
-                return True
-        if (dataType.upper() == "FLOAT"):
-            if (self._description[col][1] == FieldType.C_FLOAT):
-                return True
-        if (dataType.upper() == "DOUBLE"):
-            if (self._description[col][1] == FieldType.C_DOUBLE):
-                return True
-        if (dataType.upper() == "BINARY"):
-            if (self._description[col][1] == FieldType.C_BINARY):
-                return True
-        if (dataType.upper() == "TIMESTAMP"):
-            if (self._description[col][1] == FieldType.C_TIMESTAMP):
-                return True
-        if (dataType.upper() == "NCHAR"):
-            if (self._description[col][1] == FieldType.C_NCHAR):
-                return True
-
-        return False
+        if (dataType.upper() == "BOOL") and (
+            self._description[col][1] == FieldType.C_BOOL
+        ):
+            return True
+        if (dataType.upper() == "TINYINT") and (
+            self._description[col][1] == FieldType.C_TINYINT
+        ):
+            return True
+        if (dataType.upper() == "TINYINT UNSIGNED") and (
+            self._description[col][1] == FieldType.C_TINYINT_UNSIGNED
+        ):
+            return True
+        if (dataType.upper() == "SMALLINT") and (
+            self._description[col][1] == FieldType.C_SMALLINT
+        ):
+            return True
+        if (dataType.upper() == "SMALLINT UNSIGNED") and (
+            self._description[col][1] == FieldType.C_SMALLINT_UNSIGNED
+        ):
+            return True
+        if (dataType.upper() == "INT") and (
+            self._description[col][1] == FieldType.C_INT
+        ):
+            return True
+        if (dataType.upper() == "INT UNSIGNED") and (
+            self._description[col][1] == FieldType.C_INT_UNSIGNED
+        ):
+            return True
+        if (dataType.upper() == "BIGINT") and (
+            self._description[col][1] == FieldType.C_BIGINT
+        ):
+            return True
+        if (dataType.upper() == "BIGINT UNSIGNED") and (
+            self._description[col][1] == FieldType.C_BIGINT_UNSIGNED
+        ):
+            return True
+        if (dataType.upper() == "FLOAT") and (
+            self._description[col][1] == FieldType.C_FLOAT
+        ):
+            return True
+        if (dataType.upper() == "DOUBLE") and (
+            self._description[col][1] == FieldType.C_DOUBLE
+        ):
+            return True
+        if (dataType.upper() == "BINARY") and (
+            self._description[col][1] == FieldType.C_BINARY
+        ):
+            return True
+        if (dataType.upper() == "TIMESTAMP") and (
+            self._description[col][1] == FieldType.C_TIMESTAMP
+        ):
+            return True
+        return (dataType.upper() == "NCHAR") and (
+            self._description[col][1] == FieldType.C_NCHAR
+        )
 
     def fetchall_row(self):
         """Fetch all (remaining) rows of a query result, returning them as a sequence of sequences (e.g. a list of tuples). Note that the cursor's arraysize attribute can affect the performance of this operation.
@@ -212,7 +219,7 @@ class TDengineCursor(object):
         if self._result is None or self._fields is None:
             raise OperationalError("Invalid use of fetchall")
 
-        buffer = [[] for i in range(len(self._fields))]
+        buffer = [[] for _ in range(len(self._fields))]
         self._rowcount = 0
         while True:
             block, num_of_fields = CTaosInterface.fetchRow(
@@ -233,7 +240,7 @@ class TDengineCursor(object):
         if self._result is None or self._fields is None:
             raise OperationalError("Invalid use of fetchall")
 
-        buffer = [[] for i in range(len(self._fields))]
+        buffer = [[] for _ in range(len(self._fields))]
         self._rowcount = 0
         while True:
             block, num_of_fields = CTaosInterface.fetchBlock(
@@ -278,9 +285,8 @@ class TDengineCursor(object):
     def _handle_result(self):
         """Handle the return result from query.
         """
-        self._description = []
-        for ele in self._fields:
-            self._description.append(
-                (ele['name'], ele['type'], None, None, None, None, False))
-
+        self._description = [
+            (ele['name'], ele['type'], None, None, None, None, False)
+            for ele in self._fields
+        ]
         return self._result

@@ -22,7 +22,7 @@ class ClusterTestcase:
     ##Cover test case 5 ##
     def run(self):
         # cluster environment set up
-        nodes = Nodes()   
+        nodes = Nodes()
         nodes.addConfigs("maxVgroupsPerDb", "10")
         nodes.addConfigs("maxTablesPerVnode", "1000")
         nodes.restartAllTaosd()
@@ -33,15 +33,15 @@ class ClusterTestcase:
         ctest.run()
 
         tdSql.init(ctest.conn.cursor(), False)
-        tdSql.execute("use %s" % ctest.dbName)
-        tdSql.error("create table tt1 using %s tags(1)" % ctest.stbName)
+        tdSql.execute(f"use {ctest.dbName}")
+        tdSql.error(f"create table tt1 using {ctest.stbName} tags(1)")
 
         nodes.removeConfigs("maxVgroupsPerDb", "10")
         nodes.removeConfigs("maxTablesPerVnode", "1000")
         nodes.restartAllTaosd()
 
         tdSql.close()
-        tdLog.success("%s successfully executed" % __file__)
+        tdLog.success(f"{__file__} successfully executed")
         
 ct = ClusterTestcase()
 ct.run()

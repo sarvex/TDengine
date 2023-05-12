@@ -83,7 +83,7 @@ class BuildDockerCluser:
         self.execCmd(cmd)
 
     def clearEnv(self):
-        cmd = "cd %s && docker-compose down --remove-orphans" % self.dockerDir
+        cmd = f"cd {self.dockerDir} && docker-compose down --remove-orphans"
         self.execCmd(cmd)
         for i in range(1, self.numOfNodes + 1):            
             self.removeFile(self.dockerDir, i, self.dirs[0])
@@ -104,7 +104,7 @@ class BuildDockerCluser:
 
     def cfg(self, option, value, nodeIndex):
         cfgPath = "%s/node%d/cfg/taos.cfg" % (self.dockerDir, nodeIndex)
-        cmd = "echo '%s %s' >> %s" % (option, value, cfgPath)
+        cmd = f"echo '{option} {value}' >> {cfgPath}"
         self.execCmd(cmd)
     
     def updateLocalhosts(self):

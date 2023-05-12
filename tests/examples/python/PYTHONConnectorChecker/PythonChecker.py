@@ -19,8 +19,14 @@ class ConnectorChecker:
         if(tbname):
             self.tbName
     def printSql(self,sql,elapsed):
-        print("[ "+"OK"+" ]"+" time cost: %s ms, execute statement ====> %s"
-                   %(elapsed,sql))
+        print(
+            (
+                "[ "
+                + "OK"
+                + " ]"
+                + f" time cost: {elapsed} ms, execute statement ====> {sql}"
+            )
+        )
     def executeQuery(self,sql):
         try:
             start=time.time()
@@ -33,32 +39,31 @@ class ConnectorChecker:
             for irow in range(numOfRows):
                 print("Row%d: ts=%s, temperature=%d, humidity=%f" %(irow, data[irow][0], data[irow][1],data[irow][2]))
         except Exception as e:
-            print("Failure sql: %s,exception: %s" %sql,str(e))  
+            print("Failure sql: %s,exception: %s" %sql, e)  
     def execute(self,sql):
         try:
             start=time.time()
             execute = self.cl.execute(sql)
             elapsed = (time.time()-start)*1000
             self.printSql(sql,elapsed)
-           
+
         except Exception as e:
-            print("Failure sql: %s,exception: %s" %
-                sql,str(e))
+            print("Failure sql: %s,exception: %s" % sql, e)
     def close(self):
         print("connetion closed.")
         self.cl.close()
         self.conn.close()
     def createDatabase(self):
-        sql="create database if not exists %s" % self.dbName
+        sql = f"create database if not exists {self.dbName}"
         self.execute(sql)
     def useDatabase(self):
-        sql="use %s" % self.dbName
+        sql = f"use {self.dbName}"
         self.execute(sql)
     def createTable(self):
-        sql="create table if not exists %s.%s (ts timestamp, temperature float, humidity int)"%(self.dbName,self.tbName)
+        sql = f"create table if not exists {self.dbName}.{self.tbName} (ts timestamp, temperature float, humidity int)"
         self.execute(sql)
     def checkDropTable(self):
-        sql="drop table if exists " + self.dbName + "." + self.tbName + ""
+        sql = f"drop table if exists {self.dbName}.{self.tbName}"
         self.execute(sql)
     def checkInsert(self):
         sql="insert into test.weather (ts, temperature, humidity) values(now, 20.5, 34)"
@@ -71,7 +76,7 @@ class ConnectorChecker:
             self.conn = taos.connect(host=self.host,user=self.user,password=self.password)
             #self.conn = taos.connect(self.host,self.user,self.password)
         except Exception as e:
-            print("connection failed: %s"%self.host)
+            print(f"connection failed: {self.host}")
             exit(1)
         print("[ OK ] Connection established.")
         self.cl = self.conn.cursor()
